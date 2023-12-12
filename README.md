@@ -1,10 +1,10 @@
-### HTTPS en mi entorno local
+## HTTPS en mi entorno local
 
 Para desarrollar sólo en nuestra máquina local. Cuando sea real utilizarás un certificado oficial con herraminentas de despliegue.
 
-manual : https://www.freecodecamp.org/news/how-to-get-https-working-on-your-local-development-environment-in-5-minutes-7af615770eec/
-shell : https://github.com/dakshshah96/local-cert-generator
-mkcert : https://github.com/FiloSottile/mkcert
+* manual : https://www.freecodecamp.org/news/how-to-get-https-working-on-your-local-development-environment-in-5-minutes-7af615770eec/
+* shell : https://github.com/dakshshah96/local-cert-generator
+* mkcert : https://github.com/FiloSottile/mkcert
 
 **También podemos usar:**  
 https://ngrok.com/
@@ -41,7 +41,7 @@ your url is hhtps://easy-melons....
 - Localtunnel: solo http/https, pero tiene custom domains  
 
 
-### Debugging
+## Debugging
 
 **Consola**
 
@@ -115,7 +115,7 @@ scripts - Muestra scripts cargados
 ```
 
 
-### --inspect y Chrome
+## --inspect y Chrome
 
 Browser y en nodeJs arrancar la aplicacion con este comando
 
@@ -148,4 +148,4 @@ Con VSC tienes los mismo en el `play con bicho` que te pide crear un archivo `la
 }
 ```
 
-
+Y le das al `Launch Progran` para arrancar desde terminal verás que conecta con mongoDB
