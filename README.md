@@ -824,21 +824,85 @@ Set-Cookie: name=darth; role=admin;
 > [!IMPORTANT]
 > seguimos con el código
 
-> <pre>
->```
->[!IMPORTANT]
->Este es un mensaje importante que debe destacarse.
->```
-</pre>
+Creo el modelo de usuarios en `models/Usuario.js`
 
 
->## [!IMPORTANT]
->Este es un mensaje importante que debe destacarse.
+```js
+const mongoose = require('mongoose');
 
+// creamos esquema
+const usuarioSchema = mongoose.Schema({
+  email: String,
+  password: String
+});
 
+// creamos el modelo
+const Usuario = mongoose.model('Usuario', usuarioSchema);
 
+// exportamos el modelo
+module.exports = Usuario;
+```
 
-><blockquote style="background-color: #FFFFE0;">
->[!IMPORTANT]
->Este es un mensaje importante que debe destacarse.
-></blockquote>
+Voy hacer en `init-db.js` que haya algunos usuarios  ya inicialmente. Recuerda que tenías una funcion `await initAgentes();` que nos borraba algunso agente que habían y creaban algunos nuevos que los metía desde el json `init-db-data.json`
+
+```js
+async function main() {
+  ...
+  // inicializar la colección de agentes
+  await initAgentes();
+}
+
+...
+
+async function initAgentes() {
+  // borrar todos los documentos de la colección de agentes
+  const deleted = await Agente.deleteMany();
+  console.log(`Eliminados ${deleted.deletedCount} agentes.`);
+
+  // crear agentes iniciales
+  const inserted = await Agente.insertMany(initData.agentes);
+  console.log(`Creados ${inserted.length} agentes.`);
+};
+```
+
+bueno pues ahora nos creamos la funcion de eliminar y crear usuarios
+
+```js
+// importo modelos desde "models index"
+const { Agente, Usuario } = require('./models');
+
+...
+
+async function main() {
+  ...
+  await initAgentes();
+  // inicializar la colección de usuarios
+  await initUsuarios();
+}
+
+...
+
+// definimos funcion
+async function initUsuarios() {
+  // eliminar usuarios
+  const deleted = await Usuario.deleteMany();
+  console.log(`Eliminados ${deleted.deletedCount} usuarios.`);
+
+  // crear usuarios
+  const inserted = await Usuario.insertMany([
+    { email: 'admin@example.com', password: '1234'},
+    { email: 'usuario1@example.com', password: '1234'},
+  ]);
+  console.log(`Creados ${inserted.length} usuarios.`)
+}
+
+```
+
+con el `models/index.js` puedo exportar todo lo que sea "publico"
+
+```js
+module.exports = {
+  Agente: require('./Agente'),
+  Usuario: require('./Usuario'),
+}
+```
