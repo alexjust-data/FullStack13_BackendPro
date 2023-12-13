@@ -1516,4 +1516,55 @@ cambio la cabecera y cambio el button por el `<a href="/login"`
 ```
 
 
+**EN ZONA PRIVADA: quiero ver el email del user**
+
+```html
+<% include cabecera.ejs %>
+  <!-- Basic features section-->
+  <section class="bg-light">
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center justify-content-center justify-content-lg-between">
+            <div class="col-12 col-lg-5">
+
+                <h2 class="display-4 lh-1 mb-4"><%= __('Private zone') %></h2>
+                <p>User: <%= email %></p>
+
+            </div>
+        </div>
+    </div>
+</section>
+<% include pie.ejs %>
+```
+
+Ahora en `PrivadoControle.js` le pasamos el emial del usuario 
+
+```js
+const Usuario = require('../models/Usuario');
+const createError = require('http-errors');
+
+// class PrivadoController {
+//   async index(req, res, next) {
+
+    try {
+      // obtener el id del usuario de la sesión
+      const usuarioId = req.session.usuarioLogado; // está en memoria
+
+      // buscar el usuario en la BD
+      const usuario = await Usuario.findById(usuarioId);
+
+      if (!usuario) { // esto no debería ocurrir por lo tanto erro de servidor
+        next(createError(500, 'usuario no encontrado'))
+        return;
+      }
+
+      res.render('privado', { email: usuario.email });
+
+    } catch (err) {
+      next(err);
+    }
+  }
+// }
+
+// module.exports = PrivadoController;
+```
 
