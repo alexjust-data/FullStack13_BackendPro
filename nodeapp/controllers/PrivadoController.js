@@ -1,15 +1,27 @@
+const Usuario = require('../models/Usuario');
+const createError = require('http-errors');
+
 class PrivadoController {
-    index(req, res, next) {
-  
-      // si el cliente que hace la petición, no tiene en su sesión la variable usuarioLogado
-      // le mandamos al login porque no le conocemos
-      if (!req.session.usuarioLogado) {
-        res.redirect('/login');
+  async index(req, res, next) {
+
+    try {
+      // obtener el id del usuario de la sesión
+      const usuarioId = req.session.usuarioLogado;
+
+      // buscar el usuario en la BD
+      const usuario = await Usuario.findById(usuarioId);
+
+      if (!usuario) {
+        next(createError(500, 'usuario no encontrado'))
         return;
       }
-  
-      res.render('privado');
+
+      res.render('privado', { email: usuario.email });
+
+    } catch (err) {
+      next(err);
     }
+  }
 }
-  
+
 module.exports = PrivadoController;

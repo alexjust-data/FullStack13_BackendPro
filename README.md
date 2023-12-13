@@ -1408,7 +1408,7 @@ cuando recibas una petición a `/privado`  activará este middelware `sessionAut
 
 
 
-**contraseña cifrada**
+**ENCRIPTAMOS LAS CONTRASEÑAS DEL USUARIOS**
 
 https://codahale.com/how-to-safely-store-a-password/
 
@@ -1458,9 +1458,62 @@ Vamos a `init-db` y cambiamos esto `{ email: 'admin@example.com', password: '123
 
 probemos `npm run init-db`
 
+Ahora no funcionaría el login en el controlador del Login 
 
 
+Creo un metodo en `models/Usuario.js` y lo uso en `loginController`
 
+```js
+// const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+// // creamos esquema
+// const usuarioSchema = mongoose.Schema({
+//   email: { type: String, unique: true},
+//   password: String
+// });
+
+// // método estático que hace un hash de una password
+// usuarioSchema.statics.hashPassword = function(passwordEnClaro) {
+//   return bcrypt.hash(passwordEnClaro, 7);
+// }
+
+// método de instancia que comprueba la password de un usuario
+usuarioSchema.methods.comparePassword = function(passwordEnClaro) {
+  return bcrypt.compare(passwordEnClaro, this.password)
+}
+
+// // creamos el modelo
+// const Usuario = mongoose.model('Usuario', usuarioSchema);
+
+// // exportamos el modelo
+// module.exports = Usuario;
+```
+
+En en `loginController` en vez de comparar con 
+` if (!usuario || usuario.password !== password) {` comparará con   
+` if (!usuario || !(await usuario.comparePassword(password)) ) {`  
+Que no coincida, 
+
+```js
+  // si no lo encuentro o la contraseña no coincide --> error
+  if (!usuario || !(await usuario.comparePassword(password)) ) {
+    res.locals.error = req.__('Invalid credentials');
+    res.locals.email = email;
+    res.render('login');
+    return;
+  }
+```
+
+cambio la cabecera y cambio el button por el `<a href="/login"`
+
+```html
+<a href="/login" class="btn btn-primary rounded-pill px-3 mb-2 mb-lg-0">
+    <span class="d-flex align-items-center">
+        <span class="small"><%= __('Login') %></span>
+    </span>
+</a>
+```
 
 
 
