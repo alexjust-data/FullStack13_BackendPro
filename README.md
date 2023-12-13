@@ -4,7 +4,8 @@
 > 
 > Instructor :  Javier  
 > ciudad : Madrid  
-> web : https://javiermiguel.com   - jamg44@gmail.com
+> web : https://javiermiguel.com   
+> jamg44@gmail.com   
 > twitter : @JavierMiguelG  
 > Guía https://github.com/KeepCodingWeb15/backend-nodejs-mongodb/commits/main/  
 
