@@ -1,11 +1,12 @@
->[!NOTE]
-> Notas prácticas del paso a paso de todo el temario `Frontend PRO`. 
-
-Instructor :  Javier  
-ciudad : Madrid  
-web : https://javiermiguel.com   - jamg44@gmail.com
-twitter : @JavierMiguelG  
-Guía https://github.com/KeepCodingWeb15/backend-nodejs-mongodb/commits/main/  
+> [!NOTE]
+> Paso a paso de todo el temario `Frontend PRO`. 
+> Todo el proceso se desarrolla en este repositorio.
+> 
+> Instructor :  Javier  
+> ciudad : Madrid  
+> web : https://javiermiguel.com   - jamg44@gmail.com
+> twitter : @JavierMiguelG  
+> Guía https://github.com/KeepCodingWeb15/backend-nodejs-mongodb/commits/main/  
 
 # Arrancamos
 
@@ -229,10 +230,10 @@ Poner tu aplicación en modo cluster se refiere a la técnica de iniciar múltip
 * Esclalabilidad : El modo cluster facilita la escalabilidad de tu aplicación. A medida que la carga en tu aplicación crece, puedes aumentar el número de workers en el cluster para manejar la carga adicional, suponiendo que la infraestructura subyacente tenga los recursos necesarios disponibles.
 
 
-[!IMPORTANT]
+> [!IMPORTANT]
 
 
-Me ahgo una copia del fichero `./bin/www` y le llamo `./bin/cluster` y le añado estas lineas
+Me hago una copia del fichero `./bin/www` y le llamo `./bin/cluster` y le añado estas lineas
 
 https://nodejs.org/api/cluster.html
 
@@ -401,7 +402,7 @@ i18n.configure({
 });
 ```
 
-[!IMPORTANT]
+> [!IMPORTANT]
 
 **Manos a la obra con nodeapp (vamos a internacionalizarla)**
 
@@ -817,5 +818,5 @@ Set-Cookie: name=darth; role=admin;
 * https://hashing.dev/about/ https://npmtrends.com/argon2-vs-bcrypt-vs-scrypt-js
 
 
-[!IMPORTANT]
+> [!IMPORTANT]
 
