@@ -824,21 +824,21 @@ Set-Cookie: name=darth; role=admin;
 > [!IMPORTANT]
 > seguimos con el código
 
-<pre>
-```
-[!IMPORTANT]
-Este es un mensaje importante que debe destacarse.
-```
+> <pre>
+>```
+>[!IMPORTANT]
+>Este es un mensaje importante que debe destacarse.
+>```
 </pre>
 
 
-## [!IMPORTANT]
-Este es un mensaje importante que debe destacarse.
+>## [!IMPORTANT]
+>Este es un mensaje importante que debe destacarse.
 
 
 
 
-<blockquote style="background-color: #FFFFE0;">
-[!IMPORTANT]
-Este es un mensaje importante que debe destacarse.
-</blockquote>
+><blockquote style="background-color: #FFFFE0;">
+>[!IMPORTANT]
+>Este es un mensaje importante que debe destacarse.
+></blockquote>
