@@ -232,6 +232,7 @@ Poner tu aplicación en modo cluster se refiere a la técnica de iniciar múltip
 
 
 > [!IMPORTANT]
+> el código
 
 
 Me hago una copia del fichero `./bin/www` y le llamo `./bin/cluster` y le añado estas lineas
@@ -404,6 +405,7 @@ i18n.configure({
 ```
 
 > [!IMPORTANT]
+> el código
 
 **Manos a la obra con nodeapp (vamos a internacionalizarla)**
 
@@ -820,4 +822,5 @@ Set-Cookie: name=darth; role=admin;
 
 
 > [!IMPORTANT]
+> el código
 
