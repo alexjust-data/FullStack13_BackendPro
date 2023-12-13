@@ -2,6 +2,10 @@
 
 /**
  * Module dependencies.
+ * 
+ * Los dos puntos (:) en la sintaxis de require en Node.js se utilizan para cargar 
+ * módulos que son parte de la API de Node.js (built-in modules), 
+ * en lugar de módulos de terceros o archivos locales.
  */
 
 var app = require('../app');
@@ -11,23 +15,27 @@ const cluster = require('node:cluster');
 const os = require('node:os');
 
 if (cluster.isPrimary) {
-  // arrancar los workers
   console.log('Arrancando el primario')
 
+  // Obtener el número de núcleos de CPU del sistema
   const numCores = os.cpus().length
 
+  // Crear un worker por cada núcleo de CPU
   for (let i = 0; i < numCores; i++) {
     cluster.fork();
   }
 
+  // Escuchar el evento 'listening' para cada worker que arranque
   cluster.on('listening', (worker, address) => {
+    // información del worker que ha arrancado
     console.log(`Worker ${worker.id} arrancado con PID ${worker.process.pid} `)
   });
 
-  cluster.on('exit', (worker, code, signal) => {
+  cluster.on('exit', (worker, code, signal) => { // Escuchar el evento 'exit' para cada worker que se detenga
+    // información del worker que se ha detenido
     console.log(`Worker ${worker.id} con PID ${worker.process.pid} se ha parado con codigo ${code} y signal ${signal}`)
     console.log('Arranco otro worker');
-    cluster.fork();
+    cluster.fork(); // Crear un nuevo worker para reemplazar al que se detuvo
   })
 
   // si soy primary no hago nada más
