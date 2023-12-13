@@ -3,11 +3,15 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+const session = require('express-session');
 const basicAuthMiddleware = require('./lib/basicAuthMiddleware');
 const swaggerMiddleware = require('./lib/swaggerMiddleware');
+const sessionAuthMiddleware = require('./lib/sessionAuthMiddleware');
 const i18n = require('./lib/i18nConfigure');
 const FeaturesController = require('./controllers/FeaturesController');
 const LangController = require('./controllers/LangController');
+const LoginController = require('./controllers/LoginController');
+const PrivadoController = require('./controllers/PrivadoController');
 
 require('./lib/connectMongoose');
 
@@ -45,13 +49,27 @@ app.use('/api/agentes', basicAuthMiddleware, require('./routes/api/agentes'));
  */
 const featuresController = new FeaturesController();
 const langController = new LangController();
+const loginController = new LoginController();
+const privadoController = new PrivadoController();
 
 app.use(i18n.init);
+app.use(session({
+  name: 'nodeapp-session', // nombre de la cookie
+  secret: 'as98987asd98ashiujkasas768tasdgyy',
+  saveUninitialized: true, // Forces a session that is "uninitialized" to be saved to the store
+  resave: false, // Forces the session to be saved back to the session store, even if the session was never modified during the request
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 2 // 2d - expiración de la sesión por inactividad
+  }
+}));
 app.use('/',      require('./routes/index'));
 app.use('/users', require('./routes/users'));
 // app.use('/features', require('./routes/features'));
 app.get('/features', featuresController.index);
 app.get('/change-locale/:locale', langController.changeLocale);
+app.get('/login', loginController.index);
+app.post('/login', loginController.post);
+app.get('/privado', sessionAuthMiddleware, privadoController.index);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -87,3 +105,4 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+

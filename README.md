@@ -906,3 +906,561 @@ module.exports = {
   Usuario: require('./Usuario'),
 }
 ```
+
+voy a provar que funcione
+
+```sh
+➜  nodeapp git:(main) ✗ npm run init-db
+
+> nodeapp@0.0.0 init-db
+> node init-db.js
+
+Conectado a MongoDB en cursonode
+Estas seguro de que quieres borrar la base de datos y cargar datos iniciales?si
+Eliminados 3 agentes.
+Creados 3 agentes.
+Eliminados 0 usuarios.
+Creados 2 usuarios.
+```
+
+**Ahora que tenemos usuarios nos hacemos una página de Login**
+
+Me creo un nuevo controlador `controlador/LoginController.js`
+
+```js
+class LoginController {
+
+  index(req, res, next) {
+    res.render('login'); // render de una vista de una pag que se llama login
+  }
+}
+
+module.exports = LoginController;
+```
+
+Vemos a la aplicación y cargamos 
+
+```js
+...
+// const i18n = require('./lib/i18nConfigure');
+// const FeaturesController = require('./controllers/FeaturesController');
+// const LangController = require('./controllers/LangController');
+const LoginController = require('./controllers/LoginController');
+
+...
+
+
+/**
+ * Rutas del website
+ */
+// const featuresController = new FeaturesController();
+// const langController = new LangController();
+const loginController = new LoginController();
+
+// app.use(i18n.init);
+// app.use('/',      require('./routes/index'));
+// app.use('/users', require('./routes/users'));
+// // app.use('/features', require('./routes/features'));
+// app.get('/features', featuresController.index);
+// app.get('/change-locale/:locale', langController.changeLocale);
+app.get('/login', loginController.index)
+```
+
+Creamos una vista de esta página. Dentro de `views/features.ejs` si arrancas la app y miras lo que hay, te puede interesar, entonces vamos hacer una copia y le llamaremos `login.ejs` copiando el contenido y modificando cosas, es decir vamos a meter un formulario de LOGUIN para que se loguee el usuario guardando el diseño o aprevechando el diseño del template features
+
+```html
+<% include cabecera.ejs %>
+  <!-- Basic features section-->
+  <section class="bg-light">
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center justify-content-center justify-content-lg-between">
+            <!-- Formulario de login -->
+
+        </div>
+    </div>
+</section>
+<% include pie.ejs %>
+```
+
+Si te fijas en `public/index_from_template.html` verás que cargará Boostrap. Y en la página de Boostrap https://getbootstrap.com/docs/5.3/forms/overview/ puedes encontrar modelos de formularios login para copiar y pegay el codigo directamente
+
+
+```html
+<% include cabecera.ejs %>
+  <!-- Basic features section-->
+  <section class="bg-light">
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center justify-content-center justify-content-lg-between">
+
+
+            <form>
+                <div class="mb-3">
+                  <label for="exampleInputEmail1" class="form-label">Email address</label>
+                  <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+                  <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="exampleInputPassword1" class="form-label">Password</label>
+                  <input type="password" class="form-control" id="exampleInputPassword1">
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+
+
+        </div>
+    </div>
+</section>
+<% include pie.ejs %>
+```
+
+Queremos que el usuario pinche en el boton submit tengamos un metodo POST para enviarlo a la BBDD y los imputs han de tener el `name` si no no irán al servidor. Así hará un post a la ruta `/login`
+
+```html
+<form method="POST">
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label">Email address</label>
+      <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+      <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputPassword1" class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" id="exampleInputPassword1">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+
+</form>
+```
+
+Vamos al `loginControler`
+
+```js
+const Usuario = require('../models/Usuario');
+
+class LoginController {
+
+  index(req, res, next) {
+    res.locals.error = '';
+    res.locals.email = '';
+    res.render('login');
+  }
+  // esto solo para probar que están llegando los valores al servidor
+  async post(req, res, next) {
+    console.log(req.body)
+    res.send(1)  
+  }
+
+}
+
+module.exports = LoginController;
+```
+
+y ahora este método post que he añadido a la clase LoginControler, tendré que definir su ruta en `app`
+
+```js
+/**
+ * Rutas del website
+ */
+// const featuresController = new FeaturesController();
+// const langController = new LangController();
+// const loginController = new LoginController();
+
+// app.use(i18n.init);
+// app.use('/',      require('./routes/index'));
+// app.use('/users', require('./routes/users'));
+// // app.use('/features', require('./routes/features'));
+// app.get('/features', featuresController.index);
+// app.get('/change-locale/:locale', langController.changeLocale);
+app.get('/login', loginController.index);
+app.post('/login', loginController.post);
+
+```
+
+Carga la página y comproeba que hay conexion. 
+
+Aprovecha y vete a `es.json` y traduce `"Login": "Acceso",`
+
+Vamos al `loginControler`
+
+```js
+const Usuario = require('../models/Usuario');
+
+class LoginController {
+
+  index(req, res, next) {
+    res.locals.error = '';
+    res.render('login');
+  }
+
+  async post(req, res, next) {
+    try {
+      const { email, password } = req.body;
+
+      // buscar el usuario en la base de datos
+      const usuario = await Usuario.findOne({ email: email });
+
+      // si no lo encuentro o la contraseña no coincide --> error
+      if (!usuario || usuario.password !== password) {
+        res.locals.error = req.__('Invalid credentials');
+        res.render('login');
+        return;
+      }
+      // si existe y la contraseña coincide --> zona privada
+      res.redirect('/privado');
+      
+    } catch (err) {
+      next(err);
+    }
+  }
+}
+
+module.exports = LoginController;
+```
+Esto `res.locals.error = req.__('Invalid credentials');` error de vista quiero pintarla en la vista. Me voy a `login.ejs` y le pongo en la forma:
+
+```html
+<p><%= error %></p>
+```
+
+en el controlador, esto `res.locals.error = '';` hace que cuando se renderice por primera vez esté
+
+```html
+<form method="POST">
+    <div class="mb-3">
+      <label for="exampleInputEmail1" class="form-label">Email address</label>
+      <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">
+      <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputPassword1" class="form-label">Password</label>
+      <input type="password" name="password" class="form-control" id="exampleInputPassword1">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <p><%= error %></p>
+</form>
+```
+
+esto hará que renderice la página pero que te diga, invalit credentials si en inválido. Esto le obliga al usuario escribir de nuevo todo. 
+
+Vamos hacer que **si las credenciales no son correctas el email por lo menos se le mantenga** al usuario en la casilla. Para el voy a meter una variable en el email  `value="<%= email %>"` en ` <input type="email" name="email" value="<%= email %>" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp">` esto se utiliza para insertar dinámicamente un valor en el campo de entrada del email cuando la página se carga, lo que permite al desarrollador prellenar el formulario con datos existentes o predeterminados.
+
+Aprovecha y vete a `es.json` y traduce `"Invalid credentials": "Credenciale invalidas"`
+
+`res.locals.email = '';` esto hará que cuando se renderice esté vacio la primera vez.
+Y cuando pongan invalid credential, voy a volver a mendarle a la vista ese email `res.locals.email = email;`
+
+```js
+const Usuario = require('../models/Usuario');
+
+class LoginController {
+
+  index(req, res, next) {
+    res.locals.error = '';
+    res.locals.email = '';
+    res.render('login');
+  }
+
+  async post(req, res, next) {
+    try {
+      const { email, password } = req.body;
+
+      // buscar el usuario en la base de datos
+      const usuario = await Usuario.findOne({ email: email });
+
+      // si no lo encuentro o la contraseña no coincide --> error
+      if (!usuario || usuario.password !== password) {
+        res.locals.error = req.__('Invalid credentials');
+        res.locals.email = email;
+        res.render('login');
+        return;
+      }
+      // si existe y la contraseña coincide --> zona privada
+      res.redirect('/privado');
+      
+    } catch (err) {
+      next(err);
+    }
+  }
+}
+
+module.exports = LoginController;
+```
+
+
+**USUARIO UNICOS**  
+
+vamos hacer que no ubiera usuarios multiples con el mismo email: `unique: true` solo con esto moonguse ya no le dejará
+
+```js
+const mongoose = require('mongoose');
+
+// creamos esquema
+const usuarioSchema = mongoose.Schema({
+  email: { type: String, unique: true},
+  password: String
+});
+
+// creamos el modelo
+const Usuario = mongoose.model('Usuario', usuarioSchema);
+
+// exportamos el modelo
+module.exports = Usuario;
+```
+
+**CREAMOS ZONA PRIVADA**
+
+Si hace login lo redirigimos a una zona privada. 
+
+CReo controlador  `controlers/PrivadoController.js`
+
+```js
+class PrivadoController {
+  index(req, res, next) {
+    res.render('privado'); // renderiza vista "privado"
+  }
+}
+
+module.exports = PrivadoController;
+```
+
+Lo llamo en la `app.js`
+
+```js
+...
+// const LoginController = require('./controllers/LoginController');
+const PrivadoController = require('./controllers/PrivadoController');
+
+...
+/**
+ * Rutas del website
+ */
+// const featuresController = new FeaturesController();
+// const langController = new LangController();
+// const loginController = new LoginController();
+const privadoController = new PrivadoController();
+
+// app.use(i18n.init);
+// app.use('/',      require('./routes/index'));
+// app.use('/users', require('./routes/users'));
+// // app.use('/features', require('./routes/features'));
+// app.get('/features', featuresController.index);
+// app.get('/change-locale/:locale', langController.changeLocale);
+// app.get('/login', loginController.index);
+// app.post('/login', loginController.post);
+app.get('/privado', privadoController.index);
+
+```
+
+Creo la vista (me copio features y lo trabajo) `views/privado`
+
+```html
+<% include cabecera.ejs %>
+  <!-- Basic features section-->
+  <section class="bg-light">
+    <div class="container px-5">
+        <div class="row gx-5 align-items-center justify-content-center justify-content-lg-between">
+            <div class="col-12 col-lg-5">
+
+                <h2 class="display-4 lh-1 mb-4"><%= __('Private zone') %></h2>
+
+            </div>
+        </div>
+    </div>
+</section>
+<% include pie.ejs %>
+```
+
+**caja de sesion en la memoria del servidor**
+
+Nos apoyaremos en https://github.com/expressjs/session  `npm repo expres-session`
+Que se cree sesion y se guarden ahí àra cada usuario con identificador, etc Gestiona sesion y las cookies, etc dejando la sesion de cada usuario en una propiedad `req.session`
+
+Se puede hacer sin esta librería pero es codigo ya escrito mil veces en mil sitios
+
+
+`$ npm install express-session`
+
+`app.js`
+
+```js
+...
+const session = require('express-session');
+
+
+...
+/**
+ * Rutas del website
+ */
+// const featuresController = new FeaturesController();
+// const langController = new LangController();
+// const loginController = new LoginController();
+// const privadoController = new PrivadoController();
+
+// app.use(i18n.init);
+app.use(session({
+  name: 'nodeapp-session', // nombre de la cookie
+  secret: 'as98987asd98ashiujkasas768tasdgyy', // a mano o busca secure passport generator
+  saveUninitialized: true, // Forces a session that is "uninitialized" to be saved to the store
+  resave: false, // Forces the session to be saved back to the session store, even if the session was never modified during the request
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 2 // 2d - expiración de la sesión por inactividad
+  }
+}));
+// app.use('/',      require('./routes/index'));
+// app.use('/users', require('./routes/users'));
+// // app.use('/features', require('./routes/features'));
+// app.get('/features', featuresController.index);
+// app.get('/change-locale/:locale', langController.changeLocale);
+// app.get('/login', loginController.index);
+// app.post('/login', loginController.post);
+// app.get('/privado', privadoController.index);
+```
+
+Cuando el usuario haga login en `LoginController.js` antes de enviarle a la página privada 
+
+```js
+      // si existe y la contraseña coincide --> zona privada
+      // apuntar en la sesión del usuario, que está autenticado
+      req.session.usuarioLogado = usuario._id;
+```
+
+¿como sabemos que la página privada sea privada realmente? miramos en la página que ha hecho el usuario esa petición y vamos a mirar si está logueado `PrivadoControlle.js`
+
+Esta página queda protegida gracias al trocito de codigo `// si el cliente que hace la petición, ...`
+
+```js
+class PrivadoController {
+  index(req, res, next) {
+
+    // si el cliente que hace la petición, no tiene en su sesión la variable usuarioLogado
+    // le mandamos al login porque no le conocemos
+    if (!req.session.usuarioLogado) {
+      res.redirect('/login');
+      return;
+    }
+
+    res.render('privado');
+  }
+}
+
+module.exports = PrivadoController;
+```
+
+Si quiero proteger más páginas a parte de esta página, tendrías que poner en cada una de ellas repetir el mismo codigo, incluso si la página privada tuviera otras peticiones como un PUT o un POST, pues tendrías que repetir este codigo en cada uno de ellos, para comprobar que todos los accesos a este controlador están identificados por un usuario con sesion y está logueado. ¿tendría que repetir el codigo en multiples sitios? pies vamos a ponerlo para reutilizarlo:
+
+Lo pongo en un modulo y me creo un midelware
+
+`lib/sessionAuthMiddleware.js`
+
+```js
+// modulo que exporta un middleware que controla si estamos logados o no
+
+module.exports = (req, res, next) => {
+  // si el cliente que hace la petición, no tiene en su sesión la variable usuarioLogado
+  // le redirigimos al login porque no le conocemos
+  if (!req.session.usuarioLogado) {
+    res.redirect('/login');
+    return;
+  }
+  next();
+}
+```
+
+`app.js`
+
+```js
+// ...
+// const basicAuthMiddleware = require('./lib/basicAuthMiddleware');
+// const swaggerMiddleware = require('./lib/swaggerMiddleware');
+const sessionAuthMiddleware = require('./lib/sessionAuthMiddleware');
+
+...
+
+
+/**
+ * Rutas del website
+ */
+// const featuresController = new FeaturesController();
+// const langController = new LangController();
+// const loginController = new LoginController();
+// const privadoController = new PrivadoController();
+
+// app.use(i18n.init);
+// app.use(session({
+//   name: 'nodeapp-session', // nombre de la cookie
+//   secret: 'as98987asd98ashiujkasas768tasdgyy',
+//   saveUninitialized: true, // Forces a session that is "uninitialized" to be saved to the store
+//   resave: false, // Forces the session to be saved back to the session store, even if the session was never modified during the request
+//   cookie: {
+//     maxAge: 1000 * 60 * 60 * 24 * 2 // 2d - expiración de la sesión por inactividad
+//   }
+// }));
+// app.use('/',      require('./routes/index'));
+// app.use('/users', require('./routes/users'));
+// // app.use('/features', require('./routes/features'));
+// app.get('/features', featuresController.index);
+// app.get('/change-locale/:locale', langController.changeLocale);
+// app.get('/login', loginController.index);
+// app.post('/login', loginController.post);
+app.get('/privado', sessionAuthMiddleware, privadoController.index);
+```
+
+cuando recibas una petición a `/privado`  activará este middelware `sessionAuthMiddleware` que comprueba si estoy logado y si no estás el mismo te mandará al login; pero si sí estás logado te dejará pasar a `privadoController.index`
+
+
+
+**contraseña cifrada**
+
+https://codahale.com/how-to-safely-store-a-password/
+
+`npm install bcrypt`
+
+https://github.com/kelektiv/node.bcrypt.js/
+
+
+En el modelo de usuario, aprovechando que en el modelo puedo crear metodos, me creo un metodo estático que haga un hash de una password.
+
+`models/Usuario.js`
+
+```js
+// const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
+// // creamos esquema
+// const usuarioSchema = mongoose.Schema({
+//   email: { type: String, unique: true},
+//   password: String
+// });
+
+// método estático que hace un hash de una password
+usuarioSchema.statics.hashPassword = function(passwordEnClaro) {
+  return bcrypt.hash(passwordEnClaro, 7);
+}
+
+// método de instancia que comprueba la password de un usuario
+usuarioSchema.methods.comparePassword = function(passwordEnClaro) {
+  return bcrypt.compare(passwordEnClaro, this.password)
+}
+
+// // creamos el modelo
+// const Usuario = mongoose.model('Usuario', usuarioSchema);
+
+// // exportamos el modelo
+// module.exports = Usuario;
+```
+
+
+Vamos a `init-db` y cambiamos esto `{ email: 'admin@example.com', password: '1234'},`
+
+```js
+    { email: 'admin@example.com', password: await Usuario.hashPassword('1234')},
+    { email: 'usuario1@example.com', password: await Usuario.hashPassword('1234')},
+```
+
+probemos `npm run init-db`
+
+
+
+
+
+
+
