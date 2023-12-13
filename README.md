@@ -1,6 +1,5 @@
-[!NOTE]
-
-Notas prácticas del paso a paso de todo el temario `Frontend PRO`. 
+>[!NOTE]
+> Notas prácticas del paso a paso de todo el temario `Frontend PRO`. 
 
 Instructor :  Javier  
 ciudad : Madrid  
