@@ -1,3 +1,5 @@
+
+---
 > [!NOTE]
 > Paso a paso de todo el temario `Frontend PRO`. 
 > Todo el proceso se desarrolla en [nodeapp](https://github.com/alexjust-data/FullStack_FrontendPro/tree/main/nodeapp) de este repositorio.
@@ -11,7 +13,7 @@
 >
 > Este es una continuación más avanzada de [Fundamentos-Backend-Node.js-y-MongoDB](https://github.com/alexjust-data/FullStack_Node_mongoDB)
 >
-
+---
 
 # Arrancamos
 
@@ -234,10 +236,10 @@ Poner tu aplicación en modo cluster se refiere a la técnica de iniciar múltip
 * Tolerancia a Fallos : En un cluster, si un worker se cae (debido a errores no capturados, por ejemplo), puede ser reemplazado por un nuevo worker sin afectar la disponibilidad de la aplicación. 
 * Esclalabilidad : El modo cluster facilita la escalabilidad de tu aplicación. A medida que la carga en tu aplicación crece, puedes aumentar el número de workers en el cluster para manejar la carga adicional, suponiendo que la infraestructura subyacente tenga los recursos necesarios disponibles.
 
-
+---
 > [!IMPORTANT]
 > seguimos con el código
-
+---
 
 Me hago una copia del fichero `./bin/www` y le llamo `./bin/cluster` y le añado estas lineas
 
@@ -407,9 +409,10 @@ i18n.configure({
     register: global
 });
 ```
-
+---
 > [!IMPORTANT]
 > seguimos con el código
+---
 
 **Manos a la obra con nodeapp (vamos a internacionalizarla)**
 
@@ -824,9 +827,11 @@ Set-Cookie: name=darth; role=admin;
 * https://stytch.com/blog/argon2-vs-bcrypt-vs-scrypt/ 
 * https://hashing.dev/about/ https://npmtrends.com/argon2-vs-bcrypt-vs-scrypt-js
 
-
+---
 > [!IMPORTANT]
 > seguimos con el código
+---
+
 
 Creo el modelo de usuarios en `models/Usuario.js`
 
@@ -1589,8 +1594,6 @@ Como elegir? (spoiler: PBKDF2 está antiguo, cualquiera de los otros tres es bue
 
 
 ---
-
-
 > [!IMPORTANT]
 > commit "ponemos el email del usuario en la página privada"
 ---
@@ -1708,6 +1711,7 @@ app.get('/logout', loginController.logout);
 ---
 
 
-**Más formas de autentificacion***
+**Más formas de autentificacion***  
+**VAMOS A PERMITIR CREAR AGENTES**  
 
 
