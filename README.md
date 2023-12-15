@@ -1921,8 +1921,121 @@ const agentesController = new AgentesController();
 
 // defino ruta
 app.get('/agentes-new', sessionAuthMiddleware, agentesController.new);
+```
+
+En `AgentesController` 
+
+```js
+const Agente = require('../models/Agente');
+
+class AgentesController {
+  new(req, res, next) {
+    res.render('agentes-new');
+  }
+
+  async postNewAgent(req, res, next) {
+    try {
+      const usuarioId = req.session.usuarioLogado;
+      const { name, age } = req.body;
+      
+      // le paso un objeto
+      const agente = new Agente({ 
+        name,
+        age,
+        owner: usuarioId // el que crea el agente
+      });
+      await agente.save(); // lo guardamos
+
+      res.redirect('/privado'); // lo mandamos a la lista de agentes
+
+    } catch (error) {
+      next(error);
+    }
+  }
+}
+
+module.exports = AgentesController;
+```
+
+Creamos la vista del agente new. `view/agentes-new.ejs` y me creo una vista bonita para crear un nuevo agente, me creo un formulario de boostrap.
+
+`app.js` añadimos
+
+```js
 app.post('/agentes-new', sessionAuthMiddleware, agentesController.postNewAgent);
 ```
+
+**Eliminar agentes del usuarios**
+
+
+En `view/Private.ejs` todo lo voy cogiendo de Boostrad plantillas e iconos `<i class="bi bi-trash"></i>` esto es una papelera. Esto `confirmDeleteAgent` es un afuncion para que confirme antes de borrar.
+
+```html
+<td><a
+    onclick="confirmDeleteAgent('<%= agente.name %>', '<%= agente._id %>')"
+    href="javascript:void(0);">
+        <i class="bi bi-trash"></i>
+</a></td>
+```
+
+le paso una función dentro del la vista para que pregunte si seguro quiere elimnar 
+
+```html
+<script>
+    function confirmDeleteAgent(name, agenteId) {
+        if (confirm(`Estas seguro que quieres eliminar el agente ${name}?`)) {
+            window.location.href = `/agentes-delete/${agenteId}`;
+        }
+    }
+</script>
+```
+
+Voy `AgentesController.js` y le añado la función para eliminar el agente
+
+```js
+async deleteAgent(req, res, next) {
+    try {
+      const usuarioId = req.session.usuarioLogado;
+      const agenteId = req.params.agenteId;
+
+      // validar que el agente que queremos borrar es propiedad del usuario!!!!
+      const agente = await Agente.findOne({ _id: agenteId });
+
+      // verificar que existe
+      if (!agente) {
+        console.warn(`WARNING - el usuario ${usuarioId} intentó eliminar un agente inexistente (${agenteId})`);
+        next(createError(404, 'Not found'));
+        return;
+      }
+
+      // agente.owner viene de la base de datos y es un ObjectId
+      if (agente.owner.toString() !== usuarioId) {
+        console.warn(`WARNING - el usuario ${usuarioId} intentó eliminar un agente (${agenteId}) propiedad de otro usuario (${agente.owner})`);
+        next(createError(401, 'No autorizado'));
+        return;
+      }
+
+      await Agente.deleteOne({ _id: agenteId });
+
+      res.redirect('/privado');
+
+    } catch (error) {
+      next(error);
+    }
+```
+
+`app.js` acuerdate siempre que la zona privada está protegida con `sessionAuthMiddleware`
+
+```js
+// Zona privada del usuario
+// app.get('/privado', sessionAuthMiddleware, privadoController.index);
+// app.get('/agentes-new', sessionAuthMiddleware, agentesController.new);
+// app.post('/agentes-new', sessionAuthMiddleware, agentesController.postNewAgent);
+app.get('/agentes-delete/:agenteId', sessionAuthMiddleware, agentesController.deleteAgent)
+```
+
+
+
 
 
 
