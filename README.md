@@ -2024,7 +2024,7 @@ async deleteAgent(req, res, next) {
     }
 ```
 
-`app.js` acuerdate siempre que la zona privada está protegida con `sessionAuthMiddleware`
+`app.js` acuerdate siempre que la zona privada está protegida con `sessionAuthMiddleware` recuerda esto para el proyecto final porque esto lomiramos bien. Las rutas se tiene que proteger.
 
 ```js
 // Zona privada del usuario
@@ -2034,15 +2034,204 @@ async deleteAgent(req, res, next) {
 app.get('/agentes-delete/:agenteId', sessionAuthMiddleware, agentesController.deleteAgent)
 ```
 
+### Autentificacion por API key 
 
 
+* La autenticación con API Key se basa en enviar en todas las peticiones un API Key (como cabecera o parámetro GET)
+* Éste API Key suele ser suministrada por el servicio tras el registro de usuario.
+* El API Key es único e identifica al usuario de manera unívoca.
+* El API Key siempre es la misma, no cambia ni hay que renovarla.
+
+![](nodeapp/public/assets/img/6readme.png)
 
 
+### Tokens (y JWT)
+
+![](nodeapp/public/assets/img/7readme.png)
 
 
+* JWT es un estándar abierto (RFC 7519)
+* Define una forma segura y compacta de transmitir información entre diferentes partes con un objeto JSON
+* La información puede ser verificada porque va firmada digitalmente
+* Se pueden firmar los tokens con HMAC (algoritmo secreto) o con un par de claves RSA (pública/privada)
+* el mejor sitio para guardar un token en el Browser es en una cookie como las que hemos visto
+
+![](nodeapp/public/assets/img/8readme.png)
+
+Un JWT está formado por tres partes:
+
+* Cabecera: JSON en formato base64 que indica el tipo de token y el algoritmo usado para firmarlo
+* Payload: JSON de datos en formato base64. Contiene los claims (claves del diccionario de datos).
+* Firma: firma del token resultante de aplicar la siguiente fórmula: 
+> HMACRSA256( base64(header) + base64(payload) + <secret> )
+
+**¿Por qué usar JWT?**
+
+* Evitamos guardar la sesión del usuario en la base de datos.
+* Es el usuario quien nos envía su información en todo momento.
+* Es seguro, porque podemos validar que el token no ha sido alterado desde que nosotros lo enviamos.
 
 
+Autenticación por JWT
+
+![](nodeapp/public/assets/img/9readme.png)
+
+---
+> [!IMPORTANT]
+> Segimos con el codigo
+---
+
+vamos a `controlers/LoginControllers.js` y genero ` postJWT(req, res, next)`
+
+(merece la pena pagar con esta auth const `jsonwebtoken`)
+
+`npm install jsonwebtoken`
 
 
+```js
+const jwt = require('jsonwebtoken');
+// const Usuario = require('../models/Usuario');
+
+// class LoginController {
+
+//   index(req, res, next) {}
+
+//   async post(req, res, next) {}
+
+//   logout(req, res, next) {}
+
+  async postJWT(req, res, next) {
+    try {
+      const { email, password } = req.body;
+
+      // buscar el usuario en la base de datos
+      const usuario = await Usuario.findOne({ email: email });
+
+      // si no lo encuentro o la contraseña no coincide --> error
+      if (!usuario || !(await usuario.comparePassword(password)) ) {
+        res.json({ error: 'Invalid credentials' });
+        return;
+      }
+
+      // si existe y la contraseña coincide --> devuelvo un JWT
+      const tokenJWT = await jwt.sign({ _id: usuario._id }, 's876ads87dasuytasduytasd', {
+        expiresIn: '2h'
+      });
+      res.json({ jwt: tokenJWT });
+
+    } catch (err) {
+      next(err);
+    }
+  }
+}
+module.exports = LoginController;
+```
+
+en `app.js`
+
+```js
+// esto lo utilizaré para los dos, api y website
+const loginController = new LoginController();
+
+/**
+ * Rutas del API
+ */
+// app.use('/api-doc', swaggerMiddleware);
+app.post('/api/login', loginController.postJWT);
+// app.use('/api/agentes', require('./routes/api/agentes'));
+```
+
+Abro `POSTMAN` y hago un post
+
+![](nodeapp/public/assets/img/14readme.png)
+
+y vemos la respuesta del servidor, nos ha devuelvo un JToken. Si lo coias y lo pegas en http://jwt.io verás el contenido.
+
+
+## Tareas en segundo plano
+
+**Tareas lentas o pesadas**
+
+
+* Las respuestas a las peticiones HTTP deben ser casi inmediatas 
+* Un backend lento, es un backend mal hecho
+* Pero a veces hay que hacer cosas que son lentas como enviar correo, redimensionar una imagen, leer archivos gigantes...
+* Todas esas tareas lentas, deberemos hacerlas de manera diferida
+
+**Flujo básico de una petición HTTP**
+
+
+![](nodeapp/public/assets/img/10readme.png)
+
+**Envío de un e-mail desde un back-end**
+
+![](nodeapp/public/assets/img/11readme.png)
+
+**Envío con tarea programada**
+
+![](nodeapp/public/assets/img/12readme.png)
+
+**Comandos personalizados en NPM**
+
+NPM nos permite crear nuestro propios comandos personalizados
+
+Esto es útil para ejecutarlos desde la consola o a través de tareas programadas (con cron)
+
+Tan sólo hay que crear una entrada en package.json, apartado scripts
+
+**Envío de un e-mail con tareas en background**
+
+![](nodeapp/public/assets/img/13readme.png)
+
+
+**Tareas en background con RabbitMQ**
+
+RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
+
+https://www.rabbitmq.com
+
+Podemos usarlo desde:
+
+* Instalación Win/linux/Mac https://www.rabbitmq.com/download.html
+* Docker https://hub.docker.com/_/rabbitmq/
+* CloudAMQP https://www.cloudamqp.com/
+
+Y usarlo desde amazon, cloud foundry, etc...
+
+**Docker**
+
+```sh
+docker run
+  -d --hostname=mq --name mq -p 8080:15672 -p 5672:5672
+  rabbitmq:3-management
+```
+
+```sh
+npm i amqplib
+```
+
+Uso con Node.js http://www.squaremobius.net/amqp.node/
+
+Ejemplos estratégias https://github.com/squaremo/amqp.node/blob/master/examples/tutorials/README.md
+
+
+¿Que tamaño pueden tener los mensajes?  
+
+Teoricamente: 2^64 bytes  
+
+En la práctica depende de las máquinas que usemos y la conexión.  
+
+Si los mensajes son grandes mejor enviar una ruta a un servidor de ficheros o similar.
+
+
+Usando MongoDB: 
+* https://github.com/chilts/mongodb-queue
+* https://github.com/scttnlsn/monq 
+* https://github.com/agenda/agenda
+
+Usando Redis: 
+* https://github.com/bee-queue/bee-queue
+* https://github.com/OptimalBits/bull
+* https://github.com/Automattic/kue
 
 

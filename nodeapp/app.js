@@ -40,18 +40,20 @@ app.use(express.static(path.join(__dirname, 'public')));
 //   next('zzz');
 // });
 
+const loginController = new LoginController();
+
 /**
  * Rutas del API
  */
 app.use('/api-doc', swaggerMiddleware);
-app.use('/api/agentes', basicAuthMiddleware, require('./routes/api/agentes'));
+app.post('/api/login', loginController.postJWT);
+app.use('/api/agentes', require('./routes/api/agentes'));
 
 /**
  * Rutas del website
  */
 const featuresController = new FeaturesController();
 const langController = new LangController();
-const loginController = new LoginController();
 const privadoController = new PrivadoController();
 const agentesController = new AgentesController();
 
@@ -79,6 +81,7 @@ app.get('/change-locale/:locale', langController.changeLocale);
 app.get('/login', loginController.index);
 app.post('/login', loginController.post);
 app.get('/logout', loginController.logout);
+// Zona privada del usuario
 app.get('/privado', sessionAuthMiddleware, privadoController.index);
 app.get('/agentes-new', sessionAuthMiddleware, agentesController.new);
 app.post('/agentes-new', sessionAuthMiddleware, agentesController.postNewAgent);
