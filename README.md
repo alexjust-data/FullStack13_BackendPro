@@ -1,13 +1,17 @@
 > [!NOTE]
 > Paso a paso de todo el temario `Frontend PRO`. 
-> Todo el proceso se desarrolla en este repositorio.
+> Todo el proceso se desarrolla en [nodeapp](https://github.com/alexjust-data/FullStack_FrontendPro/tree/main/nodeapp) de este repositorio.
 > 
 > Instructor :  Javier  
 > ciudad : Madrid  
 > web : https://javiermiguel.com   
-> jamg44@gmail.com   
+> contacto : jamg44@gmail.com   
 > twitter : @JavierMiguelG  
 > Guía https://github.com/KeepCodingWeb15/backend-nodejs-mongodb/commits/main/  
+>
+> Este es una continuación más avanzada de [Fundamentos-Backend-Node.js-y-MongoDB](https://github.com/alexjust-data/FullStack_Node_mongoDB)
+>
+
 
 # Arrancamos
 
@@ -1566,5 +1570,33 @@ const createError = require('http-errors');
 // }
 
 // module.exports = PrivadoController;
+```
+
+**Hash de contraseñas**
+
+Contacta con un profesional y que te haga el pestTesting
+
+* PBKDF2: https://keepcoding.io/blog/que-es-pbkdf2/
+* bcrypt: https://codahale.com/how-to-safely-store-a-password/ 
+* scrypt: https://github.com/Tarsnap/scrypt
+* argon2: https://medium.com/@mpreziuso/password-hashing-pbkdf2-scrypt-bcrypt-and-argon2-e25aaf41598e
+
+Como elegir? (spoiler: PBKDF2 está antiguo, cualquiera de los otros tres es bueno)
+
+* https://stytch.com/blog/argon2-vs-bcrypt-vs-scrypt/ 
+* https://hashing.dev/about/ 
+* https://npmtrends.com/argon2-vs-bcrypt-vs-scrypt-js
+
+
+
+> [!IMPORTANT]
+> commit "ponemos el email del usuario en la página privada"
+
+Voy hacer que el botón login desapareca cuando el usuario esté logueado.
+
+`views/cabecera.ejs`
+
+```html
+
 ```
 
