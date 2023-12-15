@@ -1859,8 +1859,52 @@ A cada agente que inserto lo pongo un owner y quiero poner un email en cada uno.
   ])
 ```
 
-Puedes comprobar que se han creado `npm run init-db` verás en NoSQLBooster como se han creado.
+Puedes comprobar que se han creado `npm run init-db` verás en NoSQLBooster como se han creado. Esto inicializará la base de datos eliminando y creando
 
+
+Quiero que en la zona privada aparezcan los agentes del usuario logueado. Voy a `PrivadoControññer.js`
+
+```js
+const { Agente, Usuario } = require('../models');
+
+// class PrivadoController {
+//   async index(req, res, next) {
+
+//     try {
+//       // obtener el id del usuario de la sesión
+//       const usuarioId = req.session.usuarioLogado;
+
+//       // buscar el usuario en la BD
+//       const usuario = await Usuario.findById(usuarioId);
+
+//       if (!usuario) {
+//         next(createError(500, 'usuario no encontrado'))
+//         return;
+//       }
+
+      // cuando el usuario existe
+      // cargar lista de agentes que pertenecen al usuario
+      const agentes = await Agente.find({ owner: usuarioId }); 
+      // buscaremos aquellos documentos cuya propiedad owner sea el mismo usuario id 
+
+      res.render('privado', {
+        email: usuario.email,
+        agentes // le doy una lista de agentes que enviaré a la vista
+      });
+
+//     } catch (err) {
+//       next(err);
+//     }
+//   }
+// }
+
+// module.exports = PrivadoController;
+```
+
+Me voy a la vista `Privado` y me creo una vista chula para ver los agentes.
+
+
+**Creamos un nuevo agente**
 
 
 
