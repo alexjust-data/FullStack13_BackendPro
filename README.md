@@ -1588,15 +1588,86 @@ Como elegir? (spoiler: PBKDF2 está antiguo, cualquiera de los otros tres es bue
 * https://npmtrends.com/argon2-vs-bcrypt-vs-scrypt-js
 
 
+---
+
 
 > [!IMPORTANT]
 > commit "ponemos el email del usuario en la página privada"
+---
+
+**Continuamos dentro de zona privada**
 
 Voy hacer que el botón login desapareca cuando el usuario esté logueado.
 
 `views/cabecera.ejs`
 
 ```html
-
+        <a href="/login" class="btn btn-primary rounded-pill px-3 mb-2 mb-lg-0">
+            <span class="d-flex align-items-center">
+                <span class="small"><%= __('Login') %></span>
+            </span>
+        </a>
 ```
 
+para eso me gustaria acceder a la sesión para saber si la sesión tiene ese atributo que le pusimos en 
+
+`loginControler.js`
+
+```js
+// cuando un usuario hace login lo guardamos en el atributo
+req.session.usuarioLogado = usuario._id;
+```
+
+pues desde la vista quiero ver si el usuario está logado. Podría decirle que desde el controlador renderice esa página privada `PrivadoControler,js` podría decírselo aquí y sería tan sencillo como modificar esto:
+
+```js
+res.render('privado', { email: usuario.email, usuarioLogado: usuarioId });
+```
+
+y hacer esto en cada una de las vistas. Pero vamos hacer algo más práctico, y es permitir que todas las vistas puedan acceder directamente a la sesion para leer datos de la sesion porque si escalas la app, sin meter nada en el controlador leer algo de esa sesion.
+
+Para que la vista pueda leer la sesion, en `app.js`
+
+```js
+// hacemos que el objeto session esté disponible al renderizar las vistas
+app.use((req, res, next) => {
+  res.locals.session = req.session;
+  // todo middelware hace dos cosas o responder o next para que siga evaluando
+  next();
+});
+```
+
+Nos vamos a al cabecera y cambio esta linea `<li class="nav-item"><a class="nav-link me-lg-3" href="/download"><%= __('Download') %></a></li>` por esta otra
+
+```html
+<li class="nav-item"><a class="nav-link me-lg-3" href="/privado"><%= __('Private area') %></a></li>
+```
+
+Ahora tendremos en la cabecera un "Private area" que nos lleva al area privada `href="/privado`. Ahora le meto la condición de si está logado.
+
+```html
+<ul class="navbar-nav ms-auto me-4 my-3 my-lg-0">
+    <li class="nav-item"><a class="nav-link me-lg-3" href="/features"><%= __('Features') %></a></li>
+    <% if (session.usuarioLogado) { %>
+        <li class="nav-item"><a class="nav-link me-lg-3" href="/privado"><%= __('Private area') %></a></li>
+    <% } %>
+</ul>
+```
+
+Y además lo pondré en el botón del login que aparezca el botón del `login` y aprobecho para else le meto un botoun de `logout`.
+
+```html
+  <% if (!session.usuarioLogado) { %>
+      <a href="/login" class="btn btn-primary rounded-pill px-3 mb-2 mb-lg-0">
+          <span class="d-flex align-items-center">
+              <span class="small"><%= __('Login') %></span>
+          </span>
+      </a>
+  <% } else  { %>
+      <a href="/logout" class="btn btn-primary rounded-pill px-3 mb-2 mb-lg-0">
+          <span class="d-flex align-items-center">
+              <span class="small"><%= __('Logout') %></span>
+          </span>
+      </a>
+  <% } %>
+```

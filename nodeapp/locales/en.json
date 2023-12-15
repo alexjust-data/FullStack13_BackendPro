@@ -14,5 +14,7 @@
 	"Download": "Download",
 	"Login": "Login",
 	"Private zone": "Private zone",
-	"Invalid credentials": "Invalid credentials"
+	"Invalid credentials": "Invalid credentials",
+	"Private area": "Private area",
+	"Logout": "Logout"
 }

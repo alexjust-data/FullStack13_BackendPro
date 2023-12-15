@@ -62,11 +62,17 @@ app.use(session({
     maxAge: 1000 * 60 * 60 * 24 * 2 // 2d - expiración de la sesión por inactividad
   }
 }));
+// hacemos que el objeto session esté disponible al renderizar las vistas
+app.use((req, res, next) => {
+  res.locals.session = req.session;
+  next();
+});
 app.use('/',      require('./routes/index'));
 app.use('/users', require('./routes/users'));
 // app.use('/features', require('./routes/features'));
 app.get('/features', featuresController.index);
 app.get('/change-locale/:locale', langController.changeLocale);
+app.get('/logout', loginController.logout);
 app.get('/login', loginController.index);
 app.post('/login', loginController.post);
 app.get('/privado', sessionAuthMiddleware, privadoController.index);
