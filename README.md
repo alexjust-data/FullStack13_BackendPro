@@ -1760,10 +1760,35 @@ app.use(session({
 }));
 ```
 
-Esta `'mongodb://127.0.0.1/cursonode'` es la cadena de conexion a la base de datos, nosotros también la tenemos en `connectMongoose.js` y ahora estará en dos sieiot y será desagradable tener que buscar la en en lfuturo, entonces vamos a cambiar eso tambien.
-
-
 Ahora entras en la aplicacion coomo usuario, luego apagas la app desde la terminar y la reinicas, podrás ver que ya no te echa como usuario, ya tiene tus credenciales guardadas en la base de datos.
+
+
+Esta `'mongodb://127.0.0.1/cursonode'` es la cadena de conexion a la base de datos, nosotros también la tenemos en `connectMongoose.js` y ahora estará en dos sitios y será desagradable tener que buscar la en en lfuturo, entonces vamos a cambiar eso tambien. No quiero que en el futuro quien tanga que cambiar esto necesite entender el codigo, entonces voy a ponerselo facil y lo haremos en un fichero init donde venga esta configuracion. Existen librería que se llama `dotenv`
+
+Voy hacer que mi aplicación vea la configuración de variables de entorno del sistema operativo, además con esta libreria haré que carge estas variables de entorno por si no estuvieran ahí.
+
+`npm install dotenv`
+
+https://github.com/motdotla/dotenv
+
+`app.js` :  `store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI})`
+
+`lib/connectMongoose.js` : `mongoose.connect(process.env.MONGODB_URI)`
+
+Sólo con esto si arrancas la aplicacion da error, si quieres que funcione has de pasarle las variables de entorno. Me creo fichero `.env` para que las cargue desde ahí. 
+Después, en el inicio más temprano de la aplicación, como dice la doc, le añado la linea requerida :
+
+`bin/www/`: `require('dotenv').config();`  
+`bin/cluster`: `require('dotenv').config();` 
+
+y para cuando ejecutamos la semilla init-db  
+`init-db`: `require('dotenv').config();`  
+
+lo hemos cargado en cada punto de entrada a la aplicacion.
+
+
+
+
 
 
 
