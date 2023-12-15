@@ -2078,7 +2078,7 @@ Autenticación por JWT
 
 ---
 > [!IMPORTANT]
-> Segimos con el codigo
+> Segimos con el codigo: implantamos token JWT
 ---
 
 vamos a `controlers/LoginControllers.js` y genero ` postJWT(req, res, next)`
