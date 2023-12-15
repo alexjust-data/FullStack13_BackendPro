@@ -1702,6 +1702,10 @@ Añadimos en `app.js`
 app.get('/logout', loginController.logout);
 ```
 
+En cuanto abrimos NoSqlBoosters para ver lo que pcurre en MongoDB podemos ver que tenemos una carpeta de sesion nueva con una sesion abierta y guardada ahí
+
+![](nodeapp/public/assets/img/5readme.png)
+
 ---
 > [!WARNING]
 > De cara al proyecto final, todos pinchan en esto y puede que no te contraten por este error:
@@ -1713,5 +1717,55 @@ app.get('/logout', loginController.logout);
 
 **Más formas de autentificacion***  
 **VAMOS A PERMITIR CREAR AGENTES**  
+
+Para que no esté dando la lata cada vez que reiniciemos perdamos la seseión vamos a guardar la sesión en base de datos y acontinuacion veremos como aparece una lista de agentes. Hasta ahora como guardabamos en la memoria la autentificación, cada vez que cierras la app se borra la mememoria y todos los usuario pierden su sesión.
+
+Se puede guardar las sesiones en el disco, en una BBDD (ahora tenemos mongDb), en una BBDD en memoria (redis). Ahora con mongodb nos está bien, si algún día tu aplicación va a tener una concurrencia de decenas de miles de usuarios entonces puede que redis te irá más rápido.
+
+**Metemos en MogoDb las s**
+
+https://github.com/expressjs/session  propiedad `stores`, en esta propiedad se guardarán la información de las sesiones. Ahora este modulo lo guarda en un store `MomeryStore` lo que ahora estamos haciendo, pero vamos a guardarlo en un store diferente. 
+
+Me apoyo en una librerio que se llama `connectMOngo` https://github.com/jdesboeufs/connect-mongo : 
+
+
+le tengo que decir en qué base de datos quiero que la guarde, la cadena de conexion a la bbdd.
+
+```sh
+npm install connect-mongo
+```
+
+Cambio en  `app.js`
+
+
+`store: MongoStore.create({ mongoUrl: 'mongodb://127.0.0.1/cursonode'})`
+
+
+```js
+const MongoStore = require('connect-mongo');
+
+...
+
+
+
+app.use(session({
+  name: 'nodeapp-session', // nombre de la cookie
+  secret: 'as98987asd98ashiujkasas768tasdgyy',
+  saveUninitialized: true, // Forces a session that is "uninitialized" to be saved to the store
+  resave: false, // Forces the session to be saved back to the session store, even if the session was never modified during the request
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24 * 2 // 2d - expiración de la sesión por inactividad
+  },
+  store: MongoStore.create({ mongoUrl: 'mongodb://127.0.0.1/cursonode'})
+}));
+```
+
+Esta `'mongodb://127.0.0.1/cursonode'` es la cadena de conexion a la base de datos, nosotros también la tenemos en `connectMongoose.js` y ahora estará en dos sieiot y será desagradable tener que buscar la en en lfuturo, entonces vamos a cambiar eso tambien.
+
+
+Ahora entras en la aplicacion coomo usuario, luego apagas la app desde la terminar y la reinicas, podrás ver que ya no te echa como usuario, ya tiene tus credenciales guardadas en la base de datos.
+
+
+
 
 
