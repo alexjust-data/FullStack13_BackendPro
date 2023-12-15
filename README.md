@@ -1786,6 +1786,83 @@ y para cuando ejecutamos la semilla init-db
 
 lo hemos cargado en cada punto de entrada a la aplicacion.
 
+Ahora ya carga.
+
+---
+> ![WARNING]
+> el fichero `.env` no se mete en el repositirio git. Si ahora haces un commit la has cagado. El fichero .env es tuyo, del desarrollador, de nadie más, de tus cuentas de desarrollador, ni de tus compañeros de trabajo ni de nadie más.
+---
+
+Para que un compañero sepa que ha de poner, vamos a facilitar la vida a mis compñaeros, vamos hacer una copia del fichero y lo llamaremos `.env.example` y este si que va al repo aninimizado. ¿cómo sabe que ha de utilizar esto? cómo podemos hacer para que lo sepa- LO APUNTAMOS EN EL `README.md`
+
+
+Copy .env.example to to your custom .env.
+```sh
+cp .env.example .env
+```
+And setup your configuration.
+
+
+
+## Listado de agentes 
+
+Ahora lo que quiero es que cuando pinte los agente, pinte sólo los agente de admin o de usuario1, del que esté logado.
+
+modelo de agente `models/Agente.js` Quiero que cada agente tenga un propietario. Pero voy a aprvechar para haceruna relación de MOngoDb `owner: { ref: 'Usuario', type: mongoose.Schema.Types.ObjectId },`
+
+```js
+// definir el esquema de los agentes
+const agenteSchema = mongoose.Schema({
+  name: { type: String, index: true },
+  age: { type: Number, index: true, min: 18, max: 120 },
+  owner: { ref: 'Usuario', type: mongoose.Schema.Types.ObjectId },
+}, {
+  // collection: 'agentes' // para forzar un nombre concreto de colección
+});
+```
+
+ahora cada agente tiene un atributo diciendo quien es el propietario de este agente.  
+Voy a `init-db` donde creo los agentes les pongo una propiedad `await initAgentes();`
+
+```js
+async function main() {
+  // espero a que se conecte a la base de datos
+  await new Promise(resolve => connection.once('open', resolve))
+  const borrar = await pregunta(
+    'Estas seguro de que quieres borrar la base de datos y cargar datos iniciales?'
+  )
+  if (!borrar) {
+    process.exit();
+  }
+  await initUsuarios(); //1 se inicializan los usuarios
+  await initAgentes(); // los agnetes
+  connection.close();
+}
+```
+y en la inicializacion de los agentes, hasta ahora traíamos los agentes del archivo `init-db-data.json` pero ahora cojo los agente y los inicializo directamente en `init-db`
+
+```js
+  // crear agentes iniciales
+  const inserted = await Agente.insertMany([
+    { "name": "Smith", "age": 33, owner: adminUser._id }, // Smith es propiedad de adminUser._id
+    { "name": "Jones", "age": 23, owner: adminUser._id },
+    { "name": "Brown", "age": 46, owner: usuario1User._id }
+  ]);
+```
+
+A cada agente que inserto lo pongo un owner y quiero poner un email en cada uno. Voy hacer una funcion para que lo llame:
+
+```js
+  const [ adminUser, usuario1User ] = await Promise.all([
+    Usuario.findOne({ email: 'admin@example.com'}),
+    Usuario.findOne({ email: 'usuario1@example.com' })
+  ])
+```
+
+Puedes comprobar que se han creado `npm run init-db` verás en NoSQLBooster como se han creado.
+
+
+
 
 
 
