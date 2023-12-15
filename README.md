@@ -1906,6 +1906,24 @@ Me voy a la vista `Privado` y me creo una vista chula para ver los agentes.
 
 **Creamos un nuevo agente**
 
+Añado linea en `Privado.ejs` : `<th scope="col"><a href="/agentes-new">New agent</a></th>`  
+Me creo un `controllers/AgenteController.js` y le meto la petición de crear y borrar un agente.
+
+En la `app`
+
+```js
+const AgentesController = require('./controllers/AgentesController');
+
+/**
+ * Rutas del website
+ */
+const agentesController = new AgentesController();
+
+// defino ruta
+app.get('/agentes-new', sessionAuthMiddleware, agentesController.new);
+app.post('/agentes-new', sessionAuthMiddleware, agentesController.postNewAgent);
+```
+
 
 
 
