@@ -1671,3 +1671,43 @@ Y además lo pondré en el botón del login que aparezca el botón del `login` y
       </a>
   <% } %>
 ```
+
+Vamos hacer la funcionalidad del `logout` en `LoginController` y le metemos el metodo logout.  
+**caja de sesion en la memoria del servidor** Nos apoyaremos en https://github.com/expressjs/session  `npm repo expres-session`
+
+
+```js
+LoginController {
+  
+  ...
+
+  logout(req, res, next) {
+    req.session.regenerate(err => {
+      if (err) {
+        next(err);
+        return;
+      }
+      res.redirect('/');
+    })
+  }
+}
+```
+
+Añadimos en `app.js`
+
+```js
+app.get('/logout', loginController.logout);
+```
+
+---
+> [!WARNING]
+> De cara al proyecto final, todos pinchan en esto y puede que no te contraten por este error:
+> 
+>Todos sabemos que cuendo un usuario enre al correo electronico, lo que vemos ahí son nuestros emails, no los de otra persona, entonces el servidor de gmail cuando recibe una petición al backend y busca en la base de datos hace un filtro por los emials d e este usario. Ta,bién cuando el frontedn pones eliminar este email, hace una peticion al backend y le dice que elimine el email y el backend lo priermo que hace es verificar si ese email es mío; para que yo no pueda eliminar el email de tra persona.
+>.
+---
+
+
+**Más formas de autentificacion***
+
+
