@@ -2453,6 +2453,80 @@ si te vas a `https://ethereal.email/message/ZYHhhESjrQqJ-uwEZYHhwX9x6n-bKr2VAAAA
 Ahora vamos hacer para que quede preparado para producción.
 
 
+`lib/emailTransportConfigure.js`
+
+```js
+// const nodemailer = require('nodemailer');
+
+// module.exports = async function() {
+
+//   // entorno desarrollo
+//   const testAccount = await nodemailer.createTestAccount();
+
+//   const developmetTransport = {
+//     host: testAccount.smtp.host, //'smtp.ethereal.email',
+//     port: testAccount.smtp.port,
+//     secure: testAccount.smtp.secure,
+//     auth: {
+//         user: testAccount.user,
+//         pass: testAccount.pass
+//     }
+//   }
+
+  const productionTransport = {
+    // que sea configurable
+    service: process.env.EMAIL_SERVICE_NAME, 
+    auth: {
+      user: process.env.EMAIL_SERVICE_USER,
+      pass: process.env.EMAIL_SERVICE_PASS,
+    }
+  }
+
+  console.log('process.env.NODE_ENV', process.env.NODE_ENV); // haz login y lo verás
+
+  // uso la configuración del entorno en el que me encuentro
+  const activeTransport = process.env.NODE_ENV === 'development' ?
+    developmetTransport :
+    productionTransport;
+
+  const transport = nodemailer.createTransport(activeTransport);
+
+  // return transport;
+}
+```
+
+`package.json`
+
+```sh
+  "scripts": {
+    "start": "cross-env node NODE_ENV=production ./bin/www",
+    "dev": "cross-env NODE_ENV=development DEBUG=nodeapp:* nodemon ./bin/www",
+```
+esto nos dice si estamos en modo desarrollador o en produccion, entonces aquí podríamos utilizar esto 
+
+```js
+  // uso la configuración del entorno en el que me encuentro
+  const activeTransport = process.env.NODE_ENV === 'development' ?
+    developmetTransport :
+    productionTransport;
+``` 
+
+ahora cuando nos logueamos podemos ver en terminal 
+
+```sh
+npm run dev
+
+...
+
+
+POST /login - - ms - -
+process.env.NODE_ENV development
+URL de previsualización: https://ethereal.email/message/ZYHmVkSjrQqJ.EtHZYHmk34VFVvG.PRsAAAAAfD0.da9H60FawqCIKrsrRI
+```
+
+se hubiera enviado el emial al usuario logueado. NO tiene más historia.
+Lo que si hemos notado es que cuando hacemos lgoin tarda mucho a cargar la página y esperaríamos que tardase nada, instanteneo. Eso es muy malo ¿qué podemos hacer?
+
 
 
 
