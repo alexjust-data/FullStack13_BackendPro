@@ -2235,3 +2235,141 @@ Usando Redis:
 * https://github.com/Automattic/kue
 
 
+##
+
+Ahora mismo si pones en Browser `http://localhost:3000/api/agentes` saldrá por pantalla la lista de agentes sin haber pedido ninguna autentificación
+
+```sh
+{"results":[{"_id":"657c862970776a3eba495f55","name":"Smith","age":33,"owner":"657c862970776a3eba495f4f","__v":0},{"_id":"657c862970776a3eba495f57","name":"Brown","age":46,"owner":"657c862970776a3eba495f50","__v":0},{"_id":"657c9cbd5c692b557a6a26ca","name":"AlexJust","age":18,"owner":"657c862970776a3eba495f4f","__v":0}]}
+```
+Entonces lo que queremos es que cuando este middelware reciba una petición, que haga la validación de que tiene el JWToken correcto.
+
+```js
+/**
+ * Rutas del API
+ */
+// app.use('/api-doc', swaggerMiddleware);
+// app.post('/api/login', loginController.postJWT);
+app.use('/api/agentes', require('./routes/api/agentes'));
+```
+Para esto nos creamos un middelware para esto `lib/jwtAuthMiddleware.js` y creo un modulo que esporta un middleware. 
+
+```js
+var createError = require('http-errors');
+const jwt = require('jsonwebtoken');
+
+// modulo que exporta un middleware
+module.exports = async (req, res, next) => {
+  try {
+
+    // recoger el jwtToken de la cabecera, o del body, o de la query string
+    const jwtToken = req.get('Authorization') || req.body.jwt || req.query.jwt;
+
+    // comprobar que mandado un jwtToken
+    if (!jwtToken) {
+      next(createError(401, 'no token provided'));
+      return;
+    }
+
+    // comprobaremos que el token en válido
+    jwt.verify(jwtToken, process.env.JWT_SECRET, (err, payload) => {
+      if (err) {
+        next(createError(401, 'invalid token'));
+        return;
+      }
+      // apuntamos el usuario logado en la request
+      req.usuarioLogadoAPI = payload._id;
+      // dejamos pasar al siguiente middleware
+      next();
+    })
+
+
+  } catch (error) {
+    next(error);
+  }
+}
+```
+
+Acuérdate que el `LoginController.js` teníamos 
+
+```js
+      // si existe y la contraseña coincide --> devuelvo un JWT
+      const tokenJWT = await jwt.sign({ _id: usuario._id }, 's876ads87dasuytasduytasd', {
+```
+
+vamos a ponerlo en `.env`
+
+```sh
+JWT_SECRET='s876ads87dasuytasduytasd'
+```
+y en `.env.example` JWT_SECRET=secret  
+es por esto que hemos puesto esta lina así `jwt.verify(jwtToken, process.env.JWT_SECRET,` en `module.exports`
+
+voy a `app.js`
+
+```js
+// const swaggerMiddleware = require('./lib/swaggerMiddleware');
+// const basicAuthMiddleware = require('./lib/basicAuthMiddleware');
+// const sessionAuthMiddleware = require('./lib/sessionAuthMiddleware');
+const jwtAuthMiddleware = require('./lib/jwtAuthMiddleware');
+
+...
+
+/**
+ * Rutas del API
+ */
+// app.use('/api-doc', swaggerMiddleware);
+// app.post('/api/login', loginController.postJWT);
+app.use('/api/agentes', jwtAuthMiddleware, require('./routes/api/agentes'));
+```
+
+en `routes/api/agentes.js`
+
+```js
+router.get('/', async (req, res, next) => {
+  try {
+
+    // escribimos en el log el id del usuario logado en el API con JWT
+    console.log('Usuario API :', req.usuarioLogadoAPI): 
+```
+
+te imprimirá el Id del usuario que podriamos utilizar para si quisiéramos hacer alguna petición a la base de datos y sacar solamente sus agentes en vez de sacar todos pues podríamos sacar los suyos.
+
+Si te fijas cada agente tiene un owner, (lo puedes ver en la base de datos NoSqlBosster) pues podrías filtar con owner con filtros : 
+
+```js
+router.get('/', async (req, res, next) => {
+  try {
+
+    // escribimos en el log el id del usuario logado en el API con JWT
+    const usuarioIdLogado = req.usuarioLogadoAPI;
+
+    // // filtros
+    // // http://127.0.0.1:3000/api/agentes?name=Jones
+    // const filterByName = req.query.name;
+    // const filtreByAge = req.query.age;
+    // // paginación
+    // // http://127.0.0.1:3000/api/agentes?skip=2&limit=2
+    // const skip = req.query.skip;
+    // const limit = req.query.limit;
+    // // ordenación
+    // // http://127.0.0.1:3000/api/agentes?sort=-age%20name
+    // const sort = req.query.sort;
+    // // field selection
+    // // http://localhost:3000/api/agentes?fields=name%20-_id%20address
+    // const fields = req.query.fields;
+
+    // const filtro = {};
+
+    // if (filterByName) {
+    //   filtro.name = filterByName;
+    // }
+
+    // if (filtreByAge) {
+    //   filtro.age = filtreByAge;
+    // }
+
+    filtro.owner = usuarioIdLogado;
+```
+
+Con esto cuando hagas una petición te devolverá sólo los agentes que son de tu propiedad
