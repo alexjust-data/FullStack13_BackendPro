@@ -2148,95 +2148,6 @@ Abro `POSTMAN` y hago un post
 y vemos la respuesta del servidor, nos ha devuelvo un JToken. Si lo coias y lo pegas en http://jwt.io verás el contenido.
 
 
-## Tareas en segundo plano
-
-**Tareas lentas o pesadas**
-
-
-* Las respuestas a las peticiones HTTP deben ser casi inmediatas 
-* Un backend lento, es un backend mal hecho
-* Pero a veces hay que hacer cosas que son lentas como enviar correo, redimensionar una imagen, leer archivos gigantes...
-* Todas esas tareas lentas, deberemos hacerlas de manera diferida
-
-**Flujo básico de una petición HTTP**
-
-
-![](nodeapp/public/assets/img/10readme.png)
-
-**Envío de un e-mail desde un back-end**
-
-![](nodeapp/public/assets/img/11readme.png)
-
-**Envío con tarea programada**
-
-![](nodeapp/public/assets/img/12readme.png)
-
-**Comandos personalizados en NPM**
-
-NPM nos permite crear nuestro propios comandos personalizados
-
-Esto es útil para ejecutarlos desde la consola o a través de tareas programadas (con cron)
-
-Tan sólo hay que crear una entrada en package.json, apartado scripts
-
-**Envío de un e-mail con tareas en background**
-
-![](nodeapp/public/assets/img/13readme.png)
-
-
-**Tareas en background con RabbitMQ**
-
-RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
-
-https://www.rabbitmq.com
-
-Podemos usarlo desde:
-
-* Instalación Win/linux/Mac https://www.rabbitmq.com/download.html
-* Docker https://hub.docker.com/_/rabbitmq/
-* CloudAMQP https://www.cloudamqp.com/
-
-Y usarlo desde amazon, cloud foundry, etc...
-
-**Docker**
-
-```sh
-docker run
-  -d --hostname=mq --name mq -p 8080:15672 -p 5672:5672
-  rabbitmq:3-management
-```
-
-```sh
-npm i amqplib
-```
-
-Uso con Node.js http://www.squaremobius.net/amqp.node/
-
-Ejemplos estratégias https://github.com/squaremo/amqp.node/blob/master/examples/tutorials/README.md
-
-
-¿Que tamaño pueden tener los mensajes?  
-
-Teoricamente: 2^64 bytes  
-
-En la práctica depende de las máquinas que usemos y la conexión.  
-
-Si los mensajes son grandes mejor enviar una ruta a un servidor de ficheros o similar.
-
-
-Usando MongoDB: 
-* https://github.com/chilts/mongodb-queue
-* https://github.com/scttnlsn/monq 
-* https://github.com/agenda/agenda
-
-Usando Redis: 
-* https://github.com/bee-queue/bee-queue
-* https://github.com/OptimalBits/bull
-* https://github.com/Automattic/kue
-
-
-##
-
 Ahora mismo si pones en Browser `http://localhost:3000/api/agentes` saldrá por pantalla la lista de agentes sin haber pedido ninguna autentificación
 
 ```sh
@@ -2372,4 +2283,254 @@ router.get('/', async (req, res, next) => {
     filtro.owner = usuarioIdLogado;
 ```
 
-Con esto cuando hagas una petición te devolverá sólo los agentes que son de tu propiedad
+Con esto cuando hagas una petición te devolverá sólo los agentes que son de tu propiedad. Tanto si quiere eliminar algo como soliciatr, siempre con el filtro del usuario propietario del espacio.
+
+
+## Tareas en segundo plano
+
+Cuando tenemos una app en el movil, le damos alguna cosa y tarda, esto es pésimo para el producto. La percepción del usuario a ver que es lento, el usuario no quiere ese servicio. Si realmente sabemos que va a tardar la respuesta, hemos de resolver las espectativas del usuario. Por ejemplo si pide la codificacion de un video que tarda 1h, pues has de decirle con una progreso como avanza, en front. 
+
+**Tareas lentas o pesadas**
+
+* Las respuestas a las peticiones HTTP deben ser casi inmediatas 
+* Un backend lento, es un backend mal hecho
+* Pero a veces hay que hacer cosas que son lentas como enviar correo, redimensionar una imagen, leer archivos gigantes...
+* Todas esas tareas lentas, deberemos hacerlas de manera diferida
+
+
+**VAMOS A ENVAR CORREOS DESDE LA APLICACION**
+
+Es sencillo
+
+https://github.com/nodemailer/nodemailer
+
+https://nodemailer.com/
+
+```sh
+npm install nodemailer
+```
+
+Hay palataformas para desarrolladores como 
+* https://sendgrid.com/en-us/free y es gratis;   
+* https://www.brevo.com/
+* https://www.mailgun.com/
+
+El spam es un problema, como la suplantación, gracias a esto ya no es tan sencillo enviar un email, cierto volumne de correo los servidores se protejen mucho por culpa del spam. Los servidores tiene como mision tratar de reducir el spam todo lo que sea posible, si nuestra app va a enviar volumne de correos directamente iremos a la carpate de espam.
+
+Hay dos tipos de emial, los 
+* `transaccionales`(avisas al usario en base a algo que el usuario a hecho p.e envío email con el link) el usuario tiene un contexto del porque se envía este emial
+* `marketing` (p.e novedades del producto, etc).
+
+https://nodemailer.com/ permite conetcarse a las pataformas de estos servidores de emial casi sin cmabiar nada. En el enlace tienes los ejmplos de como aplicarlo. Además tiene un servicio que ayuda a los desarrolladores https://ethereal.email/ para que no se envíe realmente y que solo sea para ver si funciona bien.
+
+Vamos hacer que en nuestro frontend cuando el usuario haga login vamos a enviarle un email antes de mandarle a otro sitio
+
+`loginController.js`
+
+```js
+  async post(req, res, next) {
+    try {
+      // const { email, password } = req.body;
+
+      // // buscar el usuario en la base de datos
+      // const usuario = await Usuario.findOne({ email: email });
+
+      // // si no lo encuentro o la contraseña no coincide --> error
+      // if (!usuario || !(await usuario.comparePassword(password)) ) {
+      //   res.locals.error = req.__('Invalid credentials');
+      //   res.locals.email = email;
+      //   res.render('login');
+      //   return;
+      // }
+
+      // // si existe y la contraseña coincide --> zona privada
+      // // apuntar en la sesión del usuario, que está autenticado
+      // req.session.usuarioLogado = usuario._id;
+
+      // enviar email al usuario
+      const emailResult = await usuario.sendEmail('Bienvenido', 'Bienvenido a NodeApp');
+      console.log('Email enviado', emailResult); // luego ya lo quitamos
+
+  //     res.redirect('/privado');
+
+  //   } catch (err) {
+  //     next(err);
+  //   }
+
+  // }
+```
+
+vamos h hacernos el método `sendEmail` en el `models/usuario` para enviar emails ¿sería un metodo estático o de instancia? utilizaremos una instancia porque necesitamos el emial del usuario entonces usaremos `methods`
+
+```js
+const nodemailer = require('nodemailer');
+
+...
+
+
+// método para enviar emails al usuario
+usuarioSchema.methods.sendEmail = async function(asunto, cuerpo) {
+
+  // crear un transport [lo he creado en lib/emailTransportConfigure.js]
+  const transport = await emailTransportConfigure();
+
+  // enviar email
+  ...
+}
+``` 
+
+`lib/emailTransportConfigure.js`
+
+```js
+const nodemailer = require('nodemailer');
+
+module.exports = async function() {
+
+  // entorno desarrollo
+  const testAccount = await nodemailer.createTestAccount();
+
+  const developmetTransport = {
+    host: testAccount.smtp.host, //'smtp.ethereal.email',
+    port: testAccount.smtp.port,
+    secure: testAccount.smtp.secure,
+    auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+    }
+  }
+
+  const transport = nodemailer.createTransport(developmetTransport);
+
+  return transport;
+}
+```
+
+continúo... `models/usuario`
+
+```js
+// método para enviar emails al usuario
+usuarioSchema.methods.sendEmail = async function(asunto, cuerpo) {
+  // crear un transport
+  const transport = await emailTransportConfigure();
+
+  // enviar email
+  const result = await transport.sendMail({
+    from: process.env.EMAIL_SERVICE_FROM, // esto en .env EMAIL_SERVICE_FROM=admin@example.com
+    to: this.email,
+    subject: asunto,
+    // text: --> para emails con texto plano
+    html: cuerpo
+  });
+  console.log(`URL de previsualización: ${nodemailer.getTestMessageUrl(result)}`);
+  return result;
+}
+```
+
+Ahora por consola si recargas el usaurio en el browser verás como 
+
+```sh
+POST /login - - ms - -
+URL de previsualización: https://ethereal.email/message/ZYHhhESjrQqJ-uwEZYHhwX9x6n-bKr2VAAAAAYiccvnrtvhgkd4MUGtaHio
+Email enviado {
+  accepted: [ 'admin@example.com' ],
+  rejected: [],
+  ehlo: [ 'PIPELINING', '8BITMIME', 'SMTPUTF8', 'AUTH LOGIN PLAIN' ],
+  envelopeTime: 185,
+  messageTime: 176,
+  messageSize: 291,
+  response: '250 Accepted [STATUS=new MSGID=ZYHhhESjrQqJ-uwEZYHhwX9x6n-bKr2VAAAAAYiccvnrtvhgkd4MUGtaHio]',
+  envelope: { from: 'admin@example.com', to: [ 'admin@example.com' ] },
+  messageId: '<e0033287-2fd0-0563-f1d9-b037dc148261@example.com>'
+}
+```
+
+si te vas a `https://ethereal.email/message/ZYHhhESjrQqJ-uwEZYHhwX9x6n-bKr2VAAAAAYiccvnrtvhgkd4MUGtaHio` verás la estructura de tu email que se ha enviado de verdad con ese contenido
+
+
+![](nodeapp/public/assets/img/15readme.png)
+
+
+Ahora vamos hacer para que quede preparado para producción.
+
+
+
+
+
+**Flujo básico de una petición HTTP**
+
+![](nodeapp/public/assets/img/10readme.png)
+
+**Envío de un e-mail desde un back-end**
+
+![](nodeapp/public/assets/img/11readme.png)
+
+**Envío con tarea programada**
+
+![](nodeapp/public/assets/img/12readme.png)
+
+**Comandos personalizados en NPM**
+
+NPM nos permite crear nuestro propios comandos personalizados
+
+Esto es útil para ejecutarlos desde la consola o a través de tareas programadas (con cron)
+
+Tan sólo hay que crear una entrada en package.json, apartado scripts
+
+**Envío de un e-mail con tareas en background**
+
+![](nodeapp/public/assets/img/13readme.png)
+
+
+**Tareas en background con RabbitMQ**
+
+RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
+
+https://www.rabbitmq.com
+
+Podemos usarlo desde:
+
+* Instalación Win/linux/Mac https://www.rabbitmq.com/download.html
+* Docker https://hub.docker.com/_/rabbitmq/
+* CloudAMQP https://www.cloudamqp.com/
+
+Y usarlo desde amazon, cloud foundry, etc...
+
+**Docker**
+
+```sh
+docker run
+  -d --hostname=mq --name mq -p 8080:15672 -p 5672:5672
+  rabbitmq:3-management
+```
+
+```sh
+npm i amqplib
+```
+
+Uso con Node.js http://www.squaremobius.net/amqp.node/
+
+Ejemplos estratégias https://github.com/squaremo/amqp.node/blob/master/examples/tutorials/README.md
+
+
+¿Que tamaño pueden tener los mensajes?  
+
+Teoricamente: 2^64 bytes  
+
+En la práctica depende de las máquinas que usemos y la conexión.  
+
+Si los mensajes son grandes mejor enviar una ruta a un servidor de ficheros o similar.
+
+
+Usando MongoDB: 
+* https://github.com/chilts/mongodb-queue
+* https://github.com/scttnlsn/monq 
+* https://github.com/agenda/agenda
+
+Usando Redis: 
+* https://github.com/bee-queue/bee-queue
+* https://github.com/OptimalBits/bull
+* https://github.com/Automattic/kue
+
+
+---
+
