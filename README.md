@@ -2974,7 +2974,7 @@ Ahora puedes ver que se ha creado un Exchange `email-request` ya teníamos el Ex
 
 Ahor anos gustaría tener un microservicio que cuando conectáramos el Exchange a una cola de un microServicio ese microservicio es una aplicacion aparte y normalmente no lo tendremos en la misma carpeta de la aplicación.
 
-> [!NOTA]
+> [!NOTE]
 > En este caso me crearé una carpeta de `nodeapp/micro-services` y aquí voy a colocar los consumidores de los microservicios; en un proyecto real normalmente se mantiene en un repositorio de código separado, porque al fin y al cabo es otra palicación. Conceptualmente yo ya comenzaría a llamar a la app que estamos creando **plataforma** porque tenemos dos aplicaciones una nuestra app y por otra los microservicios de os emials. Con lo ucal podríamos tener dos repos con cada aplicación. Para este caso vamos a hacerlo así `nodeapp/micro-services` pero siendo conscientes que son aplicaciones distintas.
 > NodeApp no está llamando al microservicio, NOdeApp está enviando un mensaje y el microservicio recibe el mensaje y hace lo qu etenga que hacer. Entre ellos no se comunican, se comunican a través de RabbitMQ.
 
@@ -3091,18 +3091,18 @@ Ahora con el Building hecho puedo probar si le están enviando mensajes.
 
 ---
 
-> [!NOTA]
-> VOY A CORRER RabbitMQ en local porque va lento
+> [!NOTE]
+> VOY A CORRER RabbitMQ en local porque va lento.  
 > `docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management`  
-> tengo que cambiar la cadena de conexión  `.env`
-> `RABBITMQ_BROKER_URL=amqp://guest:guest@localhost:5672`
-> Y ahora rranco los dos : 
+> tengo que cambiar la cadena de conexión  `.env`  
+> `RABBITMQ_BROKER_URL=amqp://guest:guest@localhost:5672`  
+> Y ahora rranco los dos :   
 > `npm run email-sender-service`  
-> `npm run dev`
-> Una vez arracado ya te puedes ir a `[localhost:5672](http://localhost:15672/)` user: guets password:guest 
-> verás que tienes la cola creada y el Exchange, si no lo ves loguéate.
-> Ahora falta conectado creando el Building de `Queues and Streams/Queue email-sender`  le colocas el `email-request` y el `*` 
-> Te logueas y verás en terminal que funciona porque le hemos dicho en `emailSender` que en víe la URL `URL de previsualización: https://ethereal.email/message/ZYM1q0SjrQqJKClyZYM3C34VFVvGAETBAAAAAsjS0uxl2iH8Pv76sIZhLRc`
+> `npm run dev`  
+> Una vez arracado ya te puedes ir a `[localhost:5672](http://localhost:15672/)` user: guets password:guest   
+> verás que tienes la cola creada y el Exchange, si no lo ves loguéate.  
+> Ahora falta conectado creando el Building de `Queues and Streams/Queue email-sender`  le colocas el `email-request` y el `*`   
+> Te logueas y verás en terminal que funciona porque le hemos dicho en `emailSender` que en víe la URL `URL de previsualización: https://ethereal.email/message/ZYM1q0SjrQqJKClyZYM3C34VFVvGAETBAAAAAsjS0uxl2iH8Pv76sIZhLRc`  
 
 
 Arranco con `npx nodemon ./micro-services/emailSender.js` porque así no vamos a estar trabajando parándolo y arranconadolo:
@@ -3187,7 +3187,7 @@ async function createTransport() {
 
 ```
 
-> [!NOTA]
+> [!NOTE]   
 > Me fuí a `models/usuario` y en `// método para pedir a otro servicio que envie un email (RabbitMQ)` le añadí a quien debe enviarle el email con `const mensaje = {` esta linea para que se viera el emial `to: this.email,`
 
 
