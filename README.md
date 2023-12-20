@@ -3303,7 +3303,124 @@ Servidor HTTP arrancado en http://localhost:3000
 nos creamos un archivo `ejemplo-websockets/index.html` y recargamos `commit  origin/main) 18: websockets, creamos un servidor http`
 
 
+Usaremos la librería `npm repo socket.io`
 
+```sh
+npm i socket.io
+```
+
+creamos fichero `webSocketsServer.js`
+
+```js
+const socketio = require('socket.io');
+
+// exportar una función que configura un servidor HTTP
+module.exports = (server) => {
+
+}
+```
+
+`httpServer.js`
+
+
+```js
+'use strict';
+
+const http = require('node:http');
+const path = require('node:path');
+const express = require('express');
+const webSocketsServer = require('./webSocketsServer');
+
+const app = express();
+
+app.use('/', (req, res, next) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const server = http.createServer(app);
+
+server.listen(3000, () => {
+  console.log('Servidor HTTP arrancado en http://localhost:3000');
+});
+
+webSocketsServer(server);
+```
+
+
+`webSocketsServer.js`
+
+```js
+const socketio = require('socket.io');
+
+// exportar una función que configura un servidor HTTP
+module.exports = (server) => {
+  const io = socketio(server); // por convencion le llamo io
+
+  // ante cada conexión de un cliente (socket)
+  io.on('connection', socket => {
+    console.log('Nueva conexión de un cliente, con el id', socket.id);
+
+    socket.on('nuevo-mensaje', texto => {
+      console.log('mensaje recibido de un cliente', texto);
+      // reenviar el mensaje a todos los sockets conectados
+      io.emit('mensaje-desde-el-servidor', texto);
+    })
+  });
+}
+```
+
+arracamos el servidor
+
+```sh
+➜  ejemplo-websockets git:(main) ✗ npx nodemon httpServer.js
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node httpServer.js`
+Servidor HTTP arrancado en http://localhost:3000
+```
+
+en el cliente, en el `index.html` haremos que se conecte con el servidor 
+
+```html
+    <script>
+      $(function () {
+        const socket = io();
+      });
+    </script>
+  </body>
+</html>
+```
+
+sólo con esto ya tienen un hilo de comunicacion para decirse cosas uno al otro. Si queremos una especie de chat
+
+```html
+    <script>
+      $(function () {
+        const socket = io();
+
+        // enviar mensajes al servidor
+        $('form').submit(() => {
+          const texto = $('#m').val();
+
+          socket.emit('nuevo-mensaje', texto);
+          $('#m').val(''); // limpio el input
+          return false;
+        });
+
+        // recibir mensajes desde el servidor
+        socket.on('mensaje-desde-el-servidor', texto => {
+          // añadir el texto a la lista
+          const li = $('<li>').text(texto);
+          $('#messages').append(li);
+        })
+
+      });
+    </script>
+```
+
+1:35
 
 
 
