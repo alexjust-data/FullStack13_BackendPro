@@ -3216,3 +3216,6 @@ usuarioSchema.methods.sendEmailRabbitMQ = async function(asunto, cuerpo) {
 ```
 
 y en `./micro-services/emailSender.js`  hemos de tener el destinatario `to: payload.to,`
+
+A partir de ahora verás los picos en `http://localhost:15672/#/queues/%2F/email-sender` de los envío, en terminal verás la `URL de previsualización: https://ethereal.email/message/ZYM7mESjrQqJKxm5ZYM8lY1irCAB4kX0AAAAArXAZfmwnlM5OVSI4vCGz9Y` y todo funciona bien.
+
