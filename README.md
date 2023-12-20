@@ -2660,12 +2660,12 @@ Si te vas a `RabbitMQ Manager` en https://customer.cloudamqp.com/instance haces 
 > https://www.rabbitmq.com/getstarted.html
 >
 > La X en los gráficos es un Exchange y ese X fíjate que lo envía a una o varias colas. 
-> `Publish/Subscribe` lo enviará a todas las colas, lo enviará a todo el suscrito
-> `Work Queues` irá uno detrás de otro
+> * `Publish/Subscribe` lo enviará a todas las colas, lo enviará a todo el suscrito
+> * `Work Queues` irá uno detrás de otro
 > ¿a qué codas se lo enviaremos nosotros? `keepSending = canal.publish(EXCHANGE, '*', Buffer.from(JSON.stringify(mensaje)), {` a todas, poreso hemos puesto el `*`.
-> `Routing` dependiendo del tipo de `log` el exchange lo enviará a una cola u otra. Si es por ejemplo un log de error pues le llega a un consumidor, por ejempli que elerte al admin del sistema. El log de warning lo enviaría a un fichero de log, o lo que sea.
-> `Topics` podríamos definirle comodines 
-> `RPC` de petición respuesta, hace petición y espera una respuesta.
+> * `Routing` dependiendo del tipo de `log` el exchange lo enviará a una cola u otra. Si es por ejemplo un log de error pues le llega a un consumidor, por ejempli que elerte al admin del sistema. El log de warning lo enviaría a un fichero de log, o lo que sea.
+> * `Topics` podríamos definirle comodines 
+> * `RPC` de petición respuesta, hace petición y espera una respuesta.
 
 Nosotros vamos hacer funcionar `Work Queues`
 
@@ -2820,6 +2820,19 @@ Si duplicas el terminal y abres otro consumidor `npx nodemon consumer.js` tambi�
 
 Este metodo nos permite tener varios elementos que publican y varios que consuman.
 
+**Podrías instaar RabbitMQ en LOCAL**
+
+Local descargando o con Docker es una buena alternativa (en la documentacion tienes como hacerlo)
+
+* Instalación Win/linux/Mac https://www.rabbitmq.com/download.html
+* Docker https://hub.docker.com/_/rabbitmq/
+
+```sh
+# latest RabbitMQ 3.12
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management
+```
+tienes la explicacion en el video 5.mpp minuto 3:57
+
 
 **Docker**
 
@@ -2860,3 +2873,346 @@ Usando Redis:
 
 ---
 
+## Microservicios
+
+
+Ahora predendemos que en el `amodels/usuario` cuando nos toca enviar un email `usuarioSchema.methods.sendEmail = async function(asunto, cuerpo) {` en cevz de enviarlo, que lo envía a ... para encargárselo a un microservicio; es decir al `consumer` que nos vamos hacer.
+
+Lo primero es traerme a mi `.env` de la aplicacion la dirección del servidor que hemos abierto antes con `RabittQM` : `RABBITMQ_BROKER_URL=amqps://suuberqm:5RRPrm2BvZyYHXV8gxh4KmVvzAyexTwd@whale.rmq.cloudamqp.com/suuberqm`
+
+Instalo en la app la librería `npm i amqplib` (antes la habías instaldo en el ejemplo)
+
+```sh
+npm i amqplib
+npm run dev
+```
+
+verás qe sigue teniedo la sesion abierta porque la tenemos guardada en mongodb, en los controladores cuando hacía `loginControler` teníamos que llamaba a 
+
+
+```js
+// enviar email al usuario
+      const emailResult = usuario.sendEmail('Bienvenido', 'Bienvenido a NodeApp');
+      console.log('Email enviado', emailResult);
+```
+
+ahora en el `amodels/usuario`  vamos hacernos un método para pedir otro serbicio que envía un email.
+
+```js
+// método para pedir a otro servicio que envie un email (RabbitMQ)
+usuarioSchema.methods.sendEmailRabbitMQ = async function(asunto, cuerpo) {
+  // cargar rabbitMQLib y enviamos un mensaje
+  // AHORA NOS CREAMOS UN lib/rabbitMQLib.js
+  const canal = await canalPromise;
+
+  ... continuará
+
+}
+```
+
+`lib/rabbitMQLib.js` ya que es habitual que más tarde en nuestras partes de la app queramos utilizar el envío de mensajes con otros microservicios. 
+
+```js
+const amqplib = require('amqplib');
+
+// conectar al broker de RabbitMQ
+const canalPromise = amqplib.connect(process.env.RABBITMQ_BROKER_URL)
+  .then(connection => {
+    // crear un canal
+    return connection.createChannel();
+  })
+
+module.exports = canalPromise;
+```
+
+En `usuario`
+
+```js
+// cargamos la promesa de un canal
+const canalPromise = require('../lib/rabbitMQLib');
+
+...
+
+
+// método para pedir a otro servicio que envie un email (RabbitMQ)
+usuarioSchema.methods.sendEmailRabbitMQ = async function(asunto, cuerpo) {
+  // cargar rabbitMQLib y enviamos un mensaje
+  // AHORA NOS CREAMOS UN lib/rabbitMQLib.js
+  const canal = await canalPromise;
+  // asegurar que existe el exchange
+  const exchange = 'email-request'
+  await canal.assertExchange(exchange, 'direct', {
+    durable: true // the exchange will survive broker restarts
+  });
+
+  const mensaje = {
+    asunto,
+    to: this.email,
+    cuerpo
+  };
+
+  canal.publish(exchange, '*', Buffer.from(JSON.stringify(mensaje)), {
+    persistent: true, // the message will survive broker restarts
+  });
+}
+```
+
+Vamos a `loginController` y cambiamos el método
+
+```js
+// enviar email al usuario
+// usuario.sendEmail('Bienvenido', 'Bienvenido a NodeApp');
+usuario.sendEmailRabbitMQ('Bienvenido', 'Bienvenido a NodeApp');
+console.log('Email enviado', emailResult);
+```
+
+Ahora puedes ver que se ha creado un Exchange `email-request` ya teníamos el Exchange de `tasks-request` de antes.
+
+![](nodeapp/public/assets/img/21readme.png)
+
+---
+
+Ahor anos gustaría tener un microservicio que cuando conectáramos el Exchange a una cola de un microServicio ese microservicio es una aplicacion aparte y normalmente no lo tendremos en la misma carpeta de la aplicación.
+
+> [!NOTA]
+> En este caso me crearé una carpeta de `nodeapp/micro-services` y aquí voy a colocar los consumidores de los microservicios; en un proyecto real normalmente se mantiene en un repositorio de código separado, porque al fin y al cabo es otra palicación. Conceptualmente yo ya comenzaría a llamar a la app que estamos creando **plataforma** porque tenemos dos aplicaciones una nuestra app y por otra los microservicios de os emials. Con lo ucal podríamos tener dos repos con cada aplicación. Para este caso vamos a hacerlo así `nodeapp/micro-services` pero siendo conscientes que son aplicaciones distintas.
+> NodeApp no está llamando al microservicio, NOdeApp está enviando un mensaje y el microservicio recibe el mensaje y hace lo qu etenga que hacer. Entre ellos no se comunican, se comunican a través de RabbitMQ.
+
+Creo archivo `nodeapp/micro-services/emailConsumer.js` 
+
+```js
+'use strict';
+
+require('dotenv').config();
+
+const amqplib = require('amqplib');
+const nodemailer = require('nodemailer');
+
+const QUEUE = 'email-sender';
+
+main().catch(err => console.log('Hubo un error', err));
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  // conectar al broker de RabbitMQ
+  const connection = await amqplib.connect(process.env.RABBITMQ_BROKER_URL);
+  const transport = await createTransport();
+
+  // crear un canal
+  const canal = await connection.createChannel();
+
+  // asegurar que existe la cola para recibir mensajes
+  await canal.assertQueue(QUEUE, {
+    durable: true, // the queue will survive broker restarts
+  });
+
+  canal.prefetch(1); // pending ack's [consejo: siempre arranca con 1]
+                     // mide rendimiento y si es estable comienza augmentar
+                     // el prefetch(10) para que envíe más 
+
+  canal.consume(QUEUE, async mensaje => {
+    const payload = JSON.parse(mensaje.content.toString());
+
+    const result = await transport.sendMail({
+      from: process.env.EMAIL_SERVICE_FROM,
+      to: payload.to,
+      subject: payload.asunto,
+      html: payload.cuerpo // text: --> para emails con texto plano
+    });
+    console.log(`URL de previsualización: ${nodemailer.getTestMessageUrl(result)}`);
+
+    canal.ack(mensaje);
+  });
+
+}
+
+async function createTransport() {
+  // entorno desarrollo
+  const testAccount = await nodemailer.createTestAccount();
+
+  const developmetTransport = {
+    host: testAccount.smtp.host, //'smtp.ethereal.email',
+    port: testAccount.smtp.port,
+    secure: testAccount.smtp.secure,
+    auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+    }
+  }
+
+  return nodemailer.createTransport(developmetTransport);
+}
+```
+
+en `package.json`
+
+```json
+  "scripts": {
+    "start": "cross-env node NODE_ENV=production ./bin/www",
+    "dev": "cross-env NODE_ENV=development DEBUG=nodeapp:* nodemon ./bin/www",
+    "init-db": "node init-db.js",
+    "email-sender-service": "node ./micro-services/emailSender.js"
+  },
+```
+Y ya que lo apunto en `package.json` lo apunto en el `README.md`
+
+```sh
+## Start
+
+In production:
+
+### Start email sender service
+
+npm run email-sender-service
+
+```
+
+voy a verificar si funciona arrancando el microservicio 
+
+
+```sh
+➜  nodeapp git:(main) ✗ npm run email-sender-service
+
+> nodeapp@0.0.0 email-sender-service
+> node ./micro-services/emailSender.js
+```
+
+y nos vamos a ver si ha creado la cola que debería haber creado.
+
+![](nodeapp/public/assets/img/22readme.png)
+
+
+Ahora haces click en el **suuberqm	email-sender** y creamos un buildin para que desde Exchange `email-request` envíe todos `*`
+
+![](nodeapp/public/assets/img/23readme.png)
+
+Ahora con el Building hecho puedo probar si le están enviando mensajes.
+
+---
+
+> [!NOTA]
+> VOY A CORRER RabbitMQ en local porque va lento
+> `docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.12-management`  
+> tengo que cambiar la cadena de conexión  `.env`
+> `RABBITMQ_BROKER_URL=amqp://guest:guest@localhost:5672`
+> Y ahora rranco los dos : 
+> `npm run email-sender-service`  
+> `npm run dev`
+> Una vez arracado ya te puedes ir a `[localhost:5672](http://localhost:15672/)` user: guets password:guest 
+> verás que tienes la cola creada y el Exchange, si no lo ves loguéate.
+> Ahora falta conectado creando el Building de `Queues and Streams/Queue email-sender`  le colocas el `email-request` y el `*` 
+> Te logueas y verás en terminal que funciona porque le hemos dicho en `emailSender` que en víe la URL `URL de previsualización: https://ethereal.email/message/ZYM1q0SjrQqJKClyZYM3C34VFVvGAETBAAAAAsjS0uxl2iH8Pv76sIZhLRc`
+
+
+Arranco con `npx nodemon ./micro-services/emailSender.js` porque así no vamos a estar trabajando parándolo y arranconadolo:
+
+recuerda que esto es una aplicacion separada de nodeapp
+
+```sh
+➜  nodeapp git:(main) ✗ npx nodemon ./micro-services/emailSender.js
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node ./micro-services/emailSender.js`
+```
+---
+
+Ahora no voy a utilizar ni codigo ni librerías de mi app (nodeapp) porque no quiero que dependa de nodeapp porque asumo que está en un repositorio de c odigo distinto.
+
+Voy a cojer el codigo de `lib/emailTransportConfigure.js` y me lo llevo a `./micro-services/emailSender.js` y lo vamos ajustar ahí.
+
+```js
+'use strict';
+
+require('dotenv').config();
+
+const amqplib = require('amqplib');
+const nodemailer = require('nodemailer');
+
+const QUEUE = 'email-sender';
+
+main().catch(err => console.log('Hubo un error', err));
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  // conectar al broker de RabbitMQ
+  const connection = await amqplib.connect(process.env.RABBITMQ_BROKER_URL);
+  const transport = await createTransport();
+
+  // crear un canal
+  const canal = await connection.createChannel();
+
+  // asegurar que existe la cola para recibir mensajes
+  await canal.assertQueue(QUEUE, {
+    durable: true, // the queue will survive broker restarts
+  });
+
+  canal.prefetch(1); // pending ack's
+
+  canal.consume(QUEUE, async mensaje => {
+    const payload = JSON.parse(mensaje.content.toString());
+
+    const result = await transport.sendMail({
+      from: process.env.EMAIL_SERVICE_FROM,
+      to: payload.to,
+      subject: payload.asunto,
+      html: payload.cuerpo // text: --> para emails con texto plano
+    });
+    console.log(`URL de previsualización: ${nodemailer.getTestMessageUrl(result)}`);
+
+    canal.ack(mensaje);
+  });
+
+}
+
+async function createTransport() {
+  // entorno desarrollo
+  const testAccount = await nodemailer.createTestAccount();
+
+  const developmetTransport = {
+    host: testAccount.smtp.host, //'smtp.ethereal.email',
+    port: testAccount.smtp.port,
+    secure: testAccount.smtp.secure,
+    auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+    }
+  }
+
+  return nodemailer.createTransport(developmetTransport);
+}
+
+```
+
+> [!NOTA]
+> Me fuí a `models/usuario` y en `// método para pedir a otro servicio que envie un email (RabbitMQ)` le añadí a quien debe enviarle el email con `const mensaje = {` esta linea para que se viera el emial `to: this.email,`
+
+
+```js
+// método para pedir a otro servicio que envie un email (RabbitMQ)
+usuarioSchema.methods.sendEmailRabbitMQ = async function(asunto, cuerpo) {
+  // cargar rabbitMQLib y enviamos un mensaje
+  const canal = await canalPromise;
+  // asegurar que existe el exchange
+  const exchange = 'email-request'
+  await canal.assertExchange(exchange, 'direct', {
+    durable: true // the exchange will survive broker restarts
+  });
+
+  const mensaje = {
+    asunto,
+    to: this.email,
+    cuerpo
+  };
+
+  canal.publish(exchange, '*', Buffer.from(JSON.stringify(mensaje)), {
+    persistent: true, // the message will survive broker restarts
+  });
+
+}
+```
+
+y en `./micro-services/emailSender.js`  hemos de tener el destinatario `to: payload.to,`
