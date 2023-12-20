@@ -2571,7 +2571,7 @@ Tan sólo hay que crear una entrada en package.json, apartado scripts
 
 **Tareas en background con RabbitMQ**
 
-RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
+Es un software de envio de mensajes entre aplicativos. No tiene nada que ver con el emial o whatsapp, son mensajes entre aplicativos para que se cominquen a través de este software- RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
 
 https://rabbitmq.com/#getstarted
 
