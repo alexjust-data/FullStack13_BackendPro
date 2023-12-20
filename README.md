@@ -2752,6 +2752,7 @@ async function main() {
     // y lo gestionaría todo en memoria
   });
 
+  // le dice al publicador "dame 1 mensaje y hasta que no acabae no me des más"
   canal.prefetch(1); // pending ack's
 
   canal.consume(QUEUE, async mensaje => {
@@ -2812,7 +2813,12 @@ Puedes ver que están llegando los mensajes en `Message rates last ten minutes `
 ![](nodeapp/public/assets/img/20readme.png)
 
 
-Ahora voy hacer que el que ublica lo haga más rápido 
+Ahora voy hacer que el que ublica lo haga más rápido  `await sleep(100);`  
+Podríamos hacer que el consumidor tarde más, y que cada vez que consuma lo escriba por la consola , cómo configurar al consumidor para que le diga a la cola que se vaya esperando porque estoy trabajando: con `canal.prefetch(1); // pending ack's`
+
+Si duplicas el terminal y abres otro consumidor `npx nodemon consumer.js` también consumirá, puedes abrir tantos consumidores como creas y consumirán lo que publique el publicador. Escalas tu apicación escalando el proceso consumidor.
+
+Este metodo nos permite tener varios elementos que publican y varios que consuman.
 
 
 **Docker**
