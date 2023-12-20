@@ -3250,3 +3250,61 @@ Casos prácticos
 * Aplicaciones de chat
 * Rotativos de información deportiva
 * Actualizaciones en tiempo real de las actividades de tus amigos
+
+
+> [!IMPORTANT]
+> Continúo con codigo
+
+Creo carpeta `ejemplo-websockets/`
+
+CReo `ejemplo-websockets/httpServer.js` y me crearé un servidor express mínimo, luego le haré un commit y después le añadimos websoker para que en un commit separado tengamos como se hace
+
+```sh
+cd ejemplo-websockets/
+npm init -y
+```
+
+```sh
+npm install express
+```
+
+`httpServer.js`
+
+```js
+'use strict';
+
+const http = require('node:http');
+const path = require('node:path');
+const express = require('express');
+
+const app = express();
+
+app.use('/', (req, res, next) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const server = http.createServer(app);
+
+server.listen(3000, () => {
+  console.log('Servidor HTTP arrancado en http://localhost:3000');
+});
+```
+
+```sh
+➜  ejemplo-websockets git:(main) ✗ npx nodemon httpServer.js
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node httpServer.js`
+Servidor HTTP arrancado en http://localhost:3000
+```
+
+nos creamos un archivo `ejemplo-websockets/index.html` y recargamos `commit  origin/main) 18: websockets, creamos un servidor http`
+
+
+
+
+
+
+
