@@ -2581,10 +2581,239 @@ Podemos usarlo desde:
 * Docker https://hub.docker.com/_/rabbitmq/
 * CloudAMQP https://www.cloudamqp.com/
 
+El servicio que usaremos nosotros es CloudAMQP https://www.cloudamqp.com/  y me creo una instancia
+
+![](nodeapp/public/assets/img/16readme.png)
+
 Y usarlo desde amazon, cloud foundry, etc...
 
+Las credenciales para conectar estám en OVERVIEW
 
-1:43
+Creo carpeta `ejemplo-rabbitmq` y los archivos `consumer.js` y `publisher.js` que se comunicarán entre ellos. Ahora me voy a 
+
+```sh
+cd ejemplo-rabbitmq
+npm init -y
+```
+esto creará un packeage.json y voy a utilizar una librería `AMQP` advence message q protocol
+
+```sh
+npm repo amqplib
+npm install amqplib
+```
+
+`publisher.js`
+
+utilizamos estas técnicas https://amqp-node.github.io/amqplib/channel_api.html
+
+```js
+'use strict';
+
+require('dotenv').config();
+
+const amqplib = require('amqplib');
+const EXCHANGE = 'task-request';
+
+main().catch(err => console.log('Hubo un error', err));
+
+// const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  // conectar al broker de RabbitMQ
+  // la URL la sacamos de AMQP details https://api.cloudamqp.com/ (está en .env)
+  const connection = await amqplib.connect('amqps://ltdqkxwg:nLJMO8DacQSTA4mUtMXLzR707hamH0Gl@whale.rmq.cloudamqp.com/ltdqkxwg'); 
+
+  // crear un canal
+  const canal = await connection.createChannel();
+
+  // asegurar que existe un exchange (si no lo crea)
+  // https://amqp-node.github.io/amqplib/channel_api.html#channel_assertExchange
+  await canal.assertExchange(EXCHANGE, 'direct', {
+    durable: true // the exchange will survive broker restarts
+  })
+  
+  const mensaje = {
+    tarea : 'enviar un email'
+  };
+  console.log('enviado mensaje', mensaje);
+
+  canal.publish(EXCHANGE, '*', Buffer.from(JSON.stringify(mensaje)), {
+    persistent: true, // the message will survive broker restarts
+  });
+
+  console.log('enviado mensaje', mensaje);
+  // await sleep(1);
+}
+```
+
+ya ùedes empezar a comprovar si tienes conexion
+
+```sh
+cd ejemplo-rabbitmq
+npx nodemon publisher.js
+```
+Si te vas a `RabbitMQ Manager` en https://customer.cloudamqp.com/instance haces click y te vas a `Eschanges` y en Exchange: task-request verás el gráfico con la señal.
+
+> [!NOTE] 
+> Quien publica, publica un Exchange y quien recibe recibe una Coda. La Coda está asociada a quien recibe el mensaje normalmente.
+> Puedes ver lo patrones que hai en :
+> https://www.rabbitmq.com/getstarted.html
+>
+> La X en los gráficos es un Exchange y ese X fíjate que lo envía a una o varias colas. 
+> `Publish/Subscribe` lo enviará a todas las colas, lo enviará a todo el suscrito
+> `Work Queues` irá uno detrás de otro
+> ¿a qué codas se lo enviaremos nosotros? `keepSending = canal.publish(EXCHANGE, '*', Buffer.from(JSON.stringify(mensaje)), {` a todas, poreso hemos puesto el `*`.
+> `Routing` dependiendo del tipo de `log` el exchange lo enviará a una cola u otra. Si es por ejemplo un log de error pues le llega a un consumidor, por ejempli que elerte al admin del sistema. El log de warning lo enviaría a un fichero de log, o lo que sea.
+> `Topics` podríamos definirle comodines 
+> `RPC` de petición respuesta, hace petición y espera una respuesta.
+
+Nosotros vamos hacer funcionar `Work Queues`
+
+Voy a meterlo en un bucle infonito para que esté publicando mensajes constantemente.
+Vpu a instalar `npm install dotenv` para que me cargue las variable de entorno. Esto es porque la clave la vamos a meter en `.env` en `cd ejemplo-rabbitmq`
+
+```js
+'use strict';
+
+require('dotenv').config();
+
+const amqplib = require('amqplib');
+const EXCHANGE = 'task-request';
+
+main().catch(err => console.log('Hubo un error', err));
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  // conectar al broker de RabbitMQ
+  const connection = await amqplib.connect(process.env.RABBITMQ_BROKER_URL);
+
+  // crear un canal
+  const canal = await connection.createChannel();
+
+  // asegurar que existe un exchange
+  await canal.assertExchange(EXCHANGE, 'direct', {
+    durable: true // the exchange will survive broker restarts
+  })
+
+  let keepSending = true;
+
+  while (true) {
+    // publicar mensajes
+    const mensaje = {
+      tarea: 'enviar un email' + Date.now()
+    };
+
+    // verificar si puedo enviar más o tengo que darle un respiro
+    if (!keepSending) {
+      // esperar a que se drene (vacie) el buffer de escritura del broker
+      console.log('Buffer lleno, espero a que se vacie');
+      await new Promise(resolve => canal.on('drain', resolve))
+    }
+
+    keepSending = canal.publish(EXCHANGE, '*', Buffer.from(JSON.stringify(mensaje)), {
+      persistent: true, // the message will survive broker restarts
+    });
+
+    console.log('enviado mensaje', mensaje);
+    // await sleep(1);
+  }
+
+}
+```
+
+Creamos el publicador ahora vamos a crear el consumidor `consumidor.js`
+
+```js
+'use strict';
+
+require('dotenv').config();
+
+const amqplib = require('amqplib');
+
+const QUEUE = 'tasks';
+
+main().catch(err => console.log('Hubo un error', err));
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  // conectar al broker de RabbitMQ
+  const connection = await amqplib.connect(process.env.RABBITMQ_BROKER_URL);
+
+  // crear un canal
+  const canal = await connection.createChannel();
+
+  // asegurar que existe la cola para recibir mensajes
+  // es responsabilidad del consumir que exista esta cola
+  await canal.assertQueue(QUEUE, {
+    durable: true, // the queue will survive broker restarts
+    // si prebalece la velocidad que una poca pérdida de mensajes pondrías a FALSE
+    // y lo gestionaría todo en memoria
+  });
+
+  canal.prefetch(1); // pending ack's
+
+  canal.consume(QUEUE, async mensaje => {
+    // sacamos el contenido del Buffet (esto puede ser cualquier tipo de fichero ahora es toString()
+    const payload = mensaje.content.toString();
+    console.log(payload);
+    await sleep(150);
+    canal.ack(mensaje);
+  });
+
+}
+```
+
+Tengo arrancado y enviando mesajes ` npx nodemon publisher.js` 
+
+```sh
+enviado mensaje { tarea: 'enviar un email1703079460016' }
+enviado mensaje { tarea: 'enviar un email1703079462018' }
+enviado mensaje { tarea: 'enviar un email1703079464018' }
+enviado mensaje { tarea: 'enviar un email1703079466020' }
+enviado mensaje { tarea: 'enviar un email1703079468022' }
+enviado mensaje { tarea: 'enviar un email1703079470024' }
+enviado mensaje { tarea: 'enviar un email1703079472025' }
+```
+
+Ahora arranco `npx nodemon consumer.js` y verás que no parece que nos llegue ningún mensaje, esto es porque no lo hemos conectado:
+
+A mano (se podría hacer en codigo pero yo prefiero a mano) conectamos la cola del consumidor https://whale.rmq.cloudamqp.com/#/exchanges/ltdqkxwg/task-request:
+
+![](nodeapp/public/assets/img/17readme.png)
+
+
+Ahora si que nos aparecen los mensajes en consola
+
+```sh
+➜  ejemplo-rabbitmq git:(main) ✗ npx nodemon consumer.js
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node consumer.js`
+{"tarea":"enviar un email1703079645001"}
+{"tarea":"enviar un email1703079647004"}
+{"tarea":"enviar un email1703079649007"}
+{"tarea":"enviar un email1703079651009"}
+```
+
+Puedes ver que llegan y vemos que son string, podrían ser ficheros o lo que sea que se envia y consume.
+
+![](nodeapp/public/assets/img/18readme.png)
+
+Ves que hay una tarea abierta, entra en task
+
+![](nodeapp/public/assets/img/19readme.png)
+
+Puedes ver que están llegando los mensajes en `Message rates last ten minutes ` y en `Queued messages last ten minutes ` nos dice la cola que tiene, puedes ver que es baja o que no hay porque le estamos diciendo `canal.ack(mensaje);` en 
+
+![](nodeapp/public/assets/img/20readme.png)
+
+
+Ahora voy hacer que el que ublica lo haga más rápido 
+
 
 **Docker**
 
