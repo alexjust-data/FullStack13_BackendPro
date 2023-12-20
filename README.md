@@ -2873,7 +2873,10 @@ Usando Redis:
 
 ---
 
-## Microservicios
+> [!IMPORTANT]
+> Seguimos 
+
+
 
 
 Ahora predendemos que en el `amodels/usuario` cuando nos toca enviar un email `usuarioSchema.methods.sendEmail = async function(asunto, cuerpo) {` en cevz de enviarlo, que lo envía a ... para encargárselo a un microservicio; es decir al `consumer` que nos vamos hacer.
@@ -3219,3 +3222,31 @@ y en `./micro-services/emailSender.js`  hemos de tener el destinatario `to: payl
 
 A partir de ahora verás los picos en `http://localhost:15672/#/queues/%2F/email-sender` de los envío, en terminal verás la `URL de previsualización: https://ethereal.email/message/ZYM7mESjrQqJKxm5ZYM8lY1irCAB4kX0AAAAArXAZfmwnlM5OVSI4vCGz9Y` y todo funciona bien.
 
+
+
+**Agenda** https://github.com/agenda/agenda ya es una solucion sólo para colas de tareas.
+
+## WebSockets
+
+Nos permite comunicar de una forma más versatil, por ejemplo en frondtend con el backend.
+
+> [!NOTE]
+> "WebSockets" es una tecnología de comunicación bidireccional en tiempo real que se utiliza en el desarrollo web y permite la transferencia de datos entre un servidor y un cliente de manera eficiente y en tiempo real. A diferencia de la comunicación HTTP tradicional, que es principalmente un protocolo de solicitud-respuesta, WebSockets establece una conexión persistente entre el cliente y el servidor, lo que permite la comunicación en tiempo real en ambas direcciones.
+>
+
+WebSockets es una tecnología avanzada que hace posible abrir una sesión de comunicación interactiva entre el navegador del usuario y un servidor
+
+* Fuente: MDN https://developer.mozilla.org/es/docs/WebSockets-840092-dup
+
+Características: 
+
+* El protocolo es un estándar (RFC 6455)
+* Está diseñada para ser implementada en navegadores y servidores web, pero puede utilizarse por cualquier aplicación cliente/servidor
+* Usa los puertos habituales HTTP (80,443) Atraviesa firewalls y proxies
+
+Casos prácticos
+
+* Juegos online multijugador
+* Aplicaciones de chat
+* Rotativos de información deportiva
+* Actualizaciones en tiempo real de las actividades de tus amigos
