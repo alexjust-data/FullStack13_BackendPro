@@ -2527,8 +2527,20 @@ URL de previsualización: https://ethereal.email/message/ZYHmVkSjrQqJ.EtHZYHmk34
 se hubiera enviado el emial al usuario logueado. NO tiene más historia.
 Lo que si hemos notado es que cuando hacemos lgoin tarda mucho a cargar la página y esperaríamos que tardase nada, instanteneo. Eso es muy malo ¿qué podemos hacer?
 
+Para este caso concreto podemos hacer una cosa sencilla  `loginController.js` le quito el awaut que significa que antes que pueda entrar le envío el emial, entonces para esta caso me puedo permitir quitar esa espera de envío de emial antes de que pueda redirigirlo a la area privada.
 
+```js
+const emailResult = usuario.sendEmail('Bienvenido', 'Bienvenido a NodeApp');
+```
 
+en otro caso, si que tendría que utilizar ua tecnica quemepermita enviar ese emial y que el usuario no tenga que esperar a que se envíe.
+
+**Recuerda que : Tareas lentas o pesadas**
+
+* Las respuestas a las peticiones HTTP deben ser casi inmediatas 
+* Un backend lento, es un backend mal hecho
+* Pero a veces hay que hacer cosas que son lentas como enviar correo, redimensionar una imagen, leer archivos gigantes...
+* Todas esas tareas lentas, deberemos hacerlas de manera diferida
 
 **Flujo básico de una petición HTTP**
 
@@ -2550,6 +2562,8 @@ Esto es útil para ejecutarlos desde la consola o a través de tareas programada
 
 Tan sólo hay que crear una entrada en package.json, apartado scripts
 
+**VEAMOS OTRA FORMA DE HACER MUCHO MEJOR:**
+
 **Envío de un e-mail con tareas en background**
 
 ![](nodeapp/public/assets/img/13readme.png)
@@ -2559,7 +2573,7 @@ Tan sólo hay que crear una entrada en package.json, apartado scripts
 
 RabbitMQ es un software de envío de mensajes que implementa el protocolo AMQP
 
-https://www.rabbitmq.com
+https://rabbitmq.com/#getstarted
 
 Podemos usarlo desde:
 
@@ -2568,6 +2582,9 @@ Podemos usarlo desde:
 * CloudAMQP https://www.cloudamqp.com/
 
 Y usarlo desde amazon, cloud foundry, etc...
+
+
+1:43
 
 **Docker**
 
