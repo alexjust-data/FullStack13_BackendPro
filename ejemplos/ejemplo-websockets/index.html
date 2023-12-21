@@ -44,6 +44,13 @@
           $('#messages').append(li);
         })
 
+        // cuando llegue noticas que lo añada
+        socket.on('noticia', texto => {
+          const textoCompleto = 'Nueva noticia!: ' + texto
+          const li = $('<li>').text(textoCompleto);
+          $('#messages').append(li);
+        })
+
       });
     </script>
   </body>

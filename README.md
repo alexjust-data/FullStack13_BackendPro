@@ -3478,3 +3478,72 @@ Ahora si escribes en el Borwser verás como lo pinta en la pantalla del cliente.
 
 
 ![](nodeapp/public/assets/img/24readme.png)
+
+
+**El servidor envia mensajes cada X tiempo a los clientes**
+
+`webSockeetsServer.js`
+
+```js
+const socketio = require('socket.io');
+
+// exportar una función que configura un servidor HTTP
+module.exports = (server) => {
+  const io = socketio(server);
+
+  // ante cada conexión de un cliente (socket)
+  io.on('connection', socket => {
+    console.log('Nueva conexión de un cliente, con el id', socket.id);
+
+    socket.on('nuevo-mensaje', texto => {
+      console.log('mensaje recibido de un cliente', texto);
+      // reenviar el mensaje a todos los sockets conectados
+      io.emit('mensaje-desde-el-servidor', texto);
+    });
+
+    setInterval(() => {
+      socket.emit('noticia', 'noticia numero' + Date.now())
+    }, 2000);
+
+  });
+}
+```
+
+Y en el cliente tambie´n voy hacer que escuche este tipo de mensjaes `// cuando llegue noticas que lo añada`
+
+```html
+    <script>
+      // $(function () {
+      //   const socket = io();
+
+      //   // enviar mensajes al servidor
+      //   $('form').submit(() => {
+      //     const texto = $('#m').val();
+
+      //     socket.emit('nuevo-mensaje', texto);
+      //     $('#m').val(''); // limpio el input
+      //     return false;
+      //   });
+
+      //   // recibir mensajes desde el servidor
+      //   socket.on('mensaje-desde-el-servidor', texto => {
+      //     // añadir el texto a la lista
+      //     const li = $('<li>').text(texto);
+      //     $('#messages').append(li);
+      //   });
+
+        // cuando llegue noticas que lo añada
+        socket.on('noticia', texto => {
+          const textoCompleto = 'Nueva noticia!: ' + texto
+          const li = $('<li>').text(textoCompleto);
+          $('#messages').append(li);
+        })
+
+      });
+    </script>
+```
+
+Ahora puedes ver en el browser como van apareciendo noticias
+
+
+
