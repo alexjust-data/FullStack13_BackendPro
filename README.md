@@ -3359,12 +3359,6 @@ module.exports = (server) => {
   // ante cada conexión de un cliente (socket)
   io.on('connection', socket => {
     console.log('Nueva conexión de un cliente, con el id', socket.id);
-
-    socket.on('nuevo-mensaje', texto => {
-      console.log('mensaje recibido de un cliente', texto);
-      // reenviar el mensaje a todos los sockets conectados
-      io.emit('mensaje-desde-el-servidor', texto);
-    })
   });
 }
 ```
@@ -3393,7 +3387,67 @@ en el cliente, en el `index.html` haremos que se conecte con el servidor
 </html>
 ```
 
-sólo con esto ya tienen un hilo de comunicacion para decirse cosas uno al otro. Si queremos una especie de chat
+sólo con esto ya tienen un hilo de comunicacion entre servidor y cliente (html) para decirse cosas uno al otro. Si queremos una especie de chat
+
+Ahora vamos hacer que el cliente envíe mensajes al servidor
+
+```html
+    <script>
+      $(function () {
+        const socket = io();
+
+        // enviar mensajes al servidor
+        $('form').submit(() => {
+          const texto = $('#m').val();
+
+          socket.emit('nuevo-mensaje', texto); // envía mensaje
+          $('#m').val(''); // limpio el input
+          return false;
+        });
+      });
+    </script>
+```
+
+
+Vamos al servidor y le diremos dentro de cada conexión que nos llegua se va a invocar esta funcion socket, y a ese spcket le vamos a configurar los eventos:
+
+```js
+// const socketio = require('socket.io');
+
+// // exportar una función que configura un servidor HTTP
+// module.exports = (server) => {
+//   const io = socketio(server); // por convencion le llamo io
+
+  // ante cada conexión de un cliente (socket)
+  io.on('connection', socket => {
+    console.log('Nueva conexión de un cliente, con el id', socket.id);
+
+    socket.on('nuevo-mensaje', texto => {
+      // Verás por la terminal que si envías un mensaje te lo indicará
+      console.log('mensaje recibido de un cliente', texto); // vamos a configurar los eventos
+      // reenviar el mensaje a todos los sockets conectados
+      io.emit('mensaje-desde-el-servidor', texto);
+    })
+//   });
+// }
+```
+
+Vete a browser y envia un "Hola" y verás por la terminal que si envías un mensaje te lo indicará
+
+```sh
+[nodemon] starting `node httpServer.js`
+Servidor HTTP arrancado en http://localhost:3000
+Nueva conexión de un cliente, con el id K4jTi3rOX1q6tosNAAAB
+mensaje recibido de un cliente 
+mensaje recibido de un cliente 
+mensaje recibido de un cliente 
+mensaje recibido de un cliente rr
+mensaje recibido de un cliente 
+mensaje recibido de un cliente hola
+```
+
+
+Vamos a cliente `index.html` y pides recibir mensajes en el servidor `// recibir mensajes desde el servidor`
 
 ```html
     <script>
@@ -3420,8 +3474,7 @@ sólo con esto ya tienen un hilo de comunicacion para decirse cosas uno al otro.
     </script>
 ```
 
-1:35
+Ahora si escribes en el Borwser verás como lo pinta en la pantalla del cliente. Si quieres habre ota pantalla en incognito y repite el chat. Pon las dos pantallas y verás como tienes a cada cliente cuando hay un mensaje de alguien a cada cliente le está enviando la informacion.
 
 
-
-
+![](nodeapp/public/assets/img/24readme.png)
