@@ -3543,7 +3543,295 @@ Y en el cliente tambie´n voy hacer que escuche este tipo de mensjaes `// cuando
     </script>
 ```
 
-Ahora puedes ver en el browser como van apareciendo noticias
+Ahora puedes ver en el browser como van apareciendo noticias.
+
+Con socket.io:
+
+```js
+// sending to sender-client only
+socket.emit('message', "this is a test");
+
+// sending to all clients, include sender
+io.emit('message', "this is a test");
+
+// sending to all clients except sender
+socket.broadcast.emit('message', "this is a test");
+
+// sending to all clients in 'game' room(channel) except sender
+socket.broadcast.to('game').emit('message', 'nice game');
+
+// sending to all clients in 'game' room(channel), include sender
+io.in('game').emit('message', 'cool game');
+
+// sending to sender client, only if they are in 'game' room(channel)
+socket.to('game').emit('message', 'enjoy the game');
+
+// sending to all clients in namespace 'myNamespace', include sender
+io.of('myNamespace').emit('message', 'gg');
+
+// sending to individual socketid
+socket.broadcast.to(socketid).emit('message', 'for your eyes only');
+```
+
+---
+
+> [!IMPORTANT]
+> En video 5.mp4 minuto 1:50" explica como hacer una sala de chat por usuario.
+
+---
+
+A parte de Sockets exite muchas tras como `Server-sent events` muy parecido conceptualmente a sockets 
+
+https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
+
+
+## Microservicios
+
+La arquitectura de microservicios nace como respuesta a la problemática del mantenimiento y evolución de grandes aplicaciones monolíticas.
+
+
+https://martinfowler.com/articles/microservices.html
+
+Hasta ahora hemos creado una aplicación monolítica con `nodeapp`
+
+**Problemática de las aplicaciones monolíticas**
+* Si algo falla en la aplicación, todo el sistema se cae 
+* Son difícil de escalar a nivel de infraestructura
+* Es difícil de escalar a nivel de equipo de desarrollo (hasta que todo los desarrolladores saben cómo funciona todo el monolito)
+* Es muy difícil mantener la interdependencia de relaciones y un código limpio (spaguetti code, merge conflics, etc...)
+* Es la manera natural de desarrollar (todo software tiende a monolito)
+
+
+**Ventajas de los microservicios** 5.mp4 21:50 muy interesante  
+* Si falla un microservicio, no todo el sistema falla 
+* Su infraestructura es fácilmente escalable
+* Fácil de escalar los equipos de desarrollo (cada equipo sólo debe mantener un par de microservicios)
+* Código más mantenible y reutilizable (menos interdependencias) 
+* Permiten utilizar la mejor tecnología para cada problema
+* Facilitan externalización a equipos de desarrollo de otras empresas
+
+
+**Problemática de los microservicios**
+* Orquestación: es más difícil hacer una buena coordinación de todos
+* Entorno de desarrollo: arrancar un entorno de desarrollo con 300 microservicios te puede llevar un rato...solución: Docker/Vagrant
+* Negociación y compromiso: cada micro servicio debe mantener sus contratos con otros micro servicios que los usan (no podemos cambiar cosas a la ligera).
+* Gestión de logs. Están distribuidos, hay que unificarlos para facilitar la búsqueda 
+*  Unión de datos: los JOIN debemos hacerlos a mano
+* ¿Quién es el responsable de controlar la autenticación y autorización?
+
+
+**API Gateway**
+* Permite ser el único punto de entrada al sistema
+* Comprueba la autenticación y autorización de los usuarios
+* Los servicios tras él se despreocupan de la autenticación y autorización
+* Puede actuar como proxy/router: enrutando la petición al servicio y devolviendo la misma respuesta que el servicio
+* O puede actuar como gestor: haciendo varias peticiones y mezclando el resultado
+
+**Características de un microservicio**
+* Resolver un sólo problema y hacerlo muy bien
+* Utilizar la mejor tecnología posible para resolver ese problema 
+* Exponer un API con endpoints para interactuar con él
+* Base de datos propia (a ser posible, se aceptan BD compartidas) 
+* Conexión al bus de mensajes/cola de eventos (si es necesario) Librería cliente del API (a ser posible)
+
+---
+> [!IMPORTANT]
+> **Monolith First**
+> Comenzar una aplicación con una arquitectura de microservicios es arriesgado (tardarás mucho en acabar v.1)
+> Un monolito te permite explorar complejidad de sistemas e ir midiendo las necesidades de cada parte, por ejemplo la tienda online necesita escalar, pues mantienes tu monolito y esa parte de la tienda online la rompes fuera a un microservicio y haces solo con eso microservicio. Y así hasta llegar a una arquitectura de microservicios.
+>
+> Los microsevicios hay que mantenerlos, etc etc
+---
+
+
+**Vamos a crearnos un microservicios**
+
+Hay multiples librerías para crear microservicios (aunque no hace falta ninguna librerías para crearte microservicios por ejemplo los que hemos hecho nosotros hasta ahora)
+
+https://github.com/dashersw/cote
+
+```sh
+npm repo cote
+```
+
+
+Me creo una carpeta en ejemplos `ejemplo-microservicios`
+Me creo un pequeño script que simula una aplicacion que va hacer un cambio de moneda, y después nos haremos un microservicio que se sedique hacer cambios de moneda; además veremos como tiene propio almacenamiento el microservicio.
+
+```sh
+cd ejemplo/ejemplo-microservicios
+npm init -y 
+npm install cote
+```
+
+
+```js
+'use strict';
+
+// esta app necesita un microservicio para hacer cambios de moneda
+
+const { Requester } = require('cote');
+
+const requester = new Requester({ name: 'app' });
+
+const evento = {
+  type: 'convertir-moneda',
+  cantidad: 100,
+  desde: 'USD',
+  hacia: 'EUR',
+};
+
+setInterval(() => {
+  requester.send(evento, resultado => {
+    console.log(Date.now(), 'app obtiene resultado:', resultado);
+  });
+}, 1000);
+```
+
+```sh
+➜  ejemplos git:(main) ✗ cd ejemplo-microservicios 
+➜  ejemplo-microservicios git:(main) ✗ npx nodemon app.js
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node app.js`
+
+Hello! I'm app#37a339a6-5228-4ed7-ac6f-d3068398af01 
+========================
+
+app > service.online servicio de mnoneda#0c52a340-403f-459c-ac5f-b5cd0b858a47 on 8000
+========================
+```
+
+Creo fichero `conversionService.js`
+
+```js
+'use strict';
+
+// microservicio de conversión de moneda
+
+const { Responder } = require('cote');
+
+// almacén de datos
+const tasas = {
+  USD_EUR: 0.94,
+  EUR_USD: 1.06,
+};
+
+// lógica del servicio
+
+const responder = new Responder({ name: 'servicio de mnoneda' });
+// este responder se encarga del type: 'convertir-moneda'
+responder.on('convertir-moneda', (req, done) => {
+  // miramos que hay por aquí
+  console.log(req);
+})
+```
+
+```sh
+➜  ejemplo-microservicios git:(main) ✗ npx nodemon conversionService.js
+
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node conversionService.js`
+
+Hello! I'm servicio de mnoneda#0c52a340-403f-459c-ac5f-b5cd0b858a47 on 8000 
+========================
+
+{ type: 'convertir-moneda', cantidad: 100, desde: 'USD', hacia: 'EUR' }
+servicio de mnoneda > service.online app#37a339a6-5228-4ed7-ac6f-d3068398af01
+```
+
+Fíjate que el mensaje es el mismo `servicio de mnoneda > service.online app#37a339a6-5228-4ed7-ac6f-d3068398af01`. 
+Fíjate que ha imprimido req=`{ type: 'convertir-moneda', cantidad: 100, desde: 'USD', hacia: 'EUR' }`
+
+Vamos hacer la conversión:
+
+```js
+'use strict';
+
+// microservicio de conversión de moneda
+
+const { Responder } = require('cote');
+
+// almacén de datos
+const tasas = {
+  USD_EUR: 0.94,
+  EUR_USD: 1.06,
+};
+
+// lógica del servicio
+
+const responder = new Responder({ name: 'servicio de mnoneda' });
+
+// app.js : type: 'convertir-moneda',
+responder.on('convertir-moneda', (req, done) => {
+  const { cantidad, desde, hacia } = req;
+
+  console.log(Date.now(), 'servicio:', cantidad, desde, hacia);
+
+  // calcular la tasa de cambio
+  const tasa = tasas[`${desde}_${hacia}`];
+  const resultado = cantidad * tasa;
+
+  done(resultado);
+})
+```
+
+Verás que se están comunicando entre ellos sin haber dicho nada. Tenemos en una terminal arracada ` npx nodemon conversionService.js` y en la otra `✗ npx mon app.js`
+
+Nota que han hecho la conversión de 100 en la derecha y ha respondido a la izquierda que tiene como resultado 94. Le ha dicho, cambiamo 100$ a €, pues son 94€
+
+![](nodeapp/public/assets/img/25readme.png)
+
+
+Y se comunican si decirle cada uno donde está el otro [siempre que estén en la misma red local, no remota] no te has de preocupar de qué puerto ni nada, lo pones y funciona. Vamos hacer que esté enviando cambios de moneda cada segundo.
+
+```js
+// 'use strict';
+
+// // esta app necesita un microservicio para hacer cambios de moneda
+
+// const { Requester } = require('cote');
+
+// const requester = new Requester({ name: 'app' });
+
+// const evento = {
+//   type: 'convertir-moneda',
+//   cantidad: 100,
+//   desde: 'USD',
+//   hacia: 'EUR',
+// };
+
+setInterval(() => {
+  requester.send(evento, resultado => {
+    console.log(Date.now(), 'app obtiene resultado:', resultado);
+  });
+}, 1000); // cada segundo
+```
+
+Puedes adaptar con `setInterval` la velocidad de solicitudes de cambio de moneda. Si lo pines aun milisegundo, se puede porque básicamente hace una multiplicacion.
+
+![](nodeapp/public/assets/img/26readme.png)
+
+Si tu arrancas otro Service, las peticiones de la app se repartiran entre servidores. Además si los sevidores están parados y app está pidiendo, se acumulan en cola y cuando arranque alguno se responderían todos los pendientes por sistema de colas.
+
+---
+> [!IMPORTANT]  
+> * El de la izquierda, la `app` : Fíjate que ahora la aplicación `app` está lanzando cada segundo una petición de cambio de moneda. Imagínate que lo esté lanzando a una nube de servicios y dice "oye quien sepa resolver un evento del tipo : `type: 'convertir-moneda',` que lo haga". No sabe quien lo va hacer, ni donde está, ni qué servidor está, ni si quiera si va a responder.
+>  
+> * El de la derecha que es un responder : que se ha suscrito a a ese tipo de evento `responder.on('convertir-moneda', (req, done) => {` hace porque sabe hacer la conversión de la moneda y devuelve el resultado y la palicación recibe el resultado del servicio.
+---
+
+
+Cote está muy bien para empezar con microservicios, pero fíjate que no ves cuántos mensajes hay en cola, no sabes que está pasando por detrás. Si estuvieras con 1000 peticiones por segundo y los responders no estuvieran dando abasto, tendrías que pensar un mecanismo para solucionar el tema y con `RabnitNQL` lo ves de una forma muy sencilla qué está pasando y donde has de mejorar.
+
+
+
+
 
 
 
