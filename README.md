@@ -17,7 +17,9 @@
 
 # Arrancamos
 
-Partimos de una pequeña aplicacion que ya teníamos en https://github.com/alexjust-data/FullStack_FrontendPro y hemos iniciado el primer commit
+Partimos de que ya se hizo una pequeña aplicacion (https://github.com/alexjust-data/App-Nodepop-backend) y que ya teníamos en https://github.com/alexjust-data/FullStack_Node_mongoDB la teoría y pática de la primera parte, ahora hemos iniciado el primer commit
+
+
 
 ```sh
 ➜  nodeapp git:(main) git tag 
@@ -4074,7 +4076,7 @@ async function createTransport() {
 ```
 
 ```sh
-npm run email-sender-cote
+npx nodemon ./micro-services/emailSenderCote.js
 ```
 
 ![](nodeapp/public/assets/img/27readme.png)
@@ -4093,3 +4095,119 @@ servicio de email > service.online nodeapp-email#a14b1525-ec21-47c9-9369-736635a
 ```
 
 Vamos a probarla abriendo la sesion desde login y deberías ver como 
+
+
+![](nodeapp/public/assets/img/28readme.png)
+
+
+## PM2
+
+PM2 es esencialmente un gestor de procesos robusto y una herramienta de monitoreo que ayuda a mantener las aplicaciones en línea y monitorear su rendimiento, siendo especialmente valioso en entornos de producción. Su uso no se limita a Node.js; puede ser adaptado para gestionar cualquier tipo de proceso, lo que lo hace versátil para diferentes tecnologías y escenarios. 24/7
+
+https://pm2.keymetrics.io/docs/usage/quick-start/
+
+```sh
+# modo local
+npm install pm2@latest -g
+
+# sin necesidad de instalarlo
+npx pm2 -v
+
+# que arranque unestra aplicacion 
+npx pm2 start app.js
+
+# arranca microservicio
+npx pm2 start ./micro-services/emailSenderCote.js
+
+# para ver los procesos que están corriendo
+npx pm2 monit
+```
+
+mira el slides o la página web porque hay muchos servicios.  
+Incluso puedes crearte un fichero de configuración de arranque:  
+https://pm2.keymetrics.io/docs/usage/application-declaration/
+
+```sh
+npx pm2 init
+```
+
+nos crea un firchero `ecosystem.config.js`
+
+Definimos tres procesos que quiero que arranque 
+* le digo por dende tiene que arrancar `script: './bin/www',`
+* que arranque miroservicios : ` script: './micro-services/emailSenderCote.js',`
+* que vigile si ocurre algo: `watch: ['./micro-services/emailSenderCote.js'],`
+* las variables de entorno para cuando arranque en produccion: `NODE_ENV: 'production`,
+* `pm2 start process.json --env production`
+* las variables de entorno para cuando arranque en desarrollo: `NODE_ENV: 'development`,
+* `pm2 restart process.json --env development`
+* Que te arraqnue cinco veces para que tega mayor copacidad: `instances: 5` (aunque cierres la terminal coorren en 2 plano)
+
+
+> [!IMPORTAN] 
+> Estudia esto video 6.mp4 1:30"
+> Tienes que dominar esto.
+
+`deploy : {`es uno de los mejores inventos
+* servidor de la aplicacion : `host : 'nodeapp.com',`
+* la rama que se publica normalmente : ref  : 'origin/main',
+* en que repositorio está mi aplicacion : `repo : 'https://github.com/KeepCodingWeb15/backend-nodejs-mongodb',`
+* la ruta del servidor donde quiero que se despliqgue : `path : '/home/nodeapp/app',`
+* `pm2 deploy production setup` cuando arrancas por primera vez
+* `pm2 deploy production` hace ssh al servidor coje la version anterior que tu tuviers publicada y la deja en una carpeta aparte par que puedas hacer un rollback muy rápido y despues hace un gitpull cojiendo la nueva version del repositorio del git y reinicia tu aplicacion. Todo del forma automatica.
+
+```json
+module.exports = {
+  apps : [{
+    name: 'nodeapp',
+    script: './bin/www',
+    watch: '.',
+    env_production: {
+      NODE_ENV: 'production',
+    },
+    env_development: {
+      NODE_ENV: 'development'
+    },
+    log_date_format: 'YYYY-MM-DD HH:mm'
+  }, {
+    script: './micro-services/emailSenderCote.js',
+    watch: ['./micro-services/emailSenderCote.js'],
+    instances: 5
+  }, {
+    script: './micro-services/emailSenderRabbitMQ.js',
+    watch: ['./micro-services/emailSenderRabbitMQ.js']
+  }
+],
+
+  deploy : {
+    production : {
+      user : 'javi',
+      host : 'nodeapp.com',
+      ref  : 'origin/main',
+      repo : 'https://github.com/KeepCodingWeb15/backend-nodejs-mongodb',
+      path : '/home/nodeapp/app',
+      'pre-deploy-local': 'npm run build',
+      'post-deploy' : 'npm install && pm2 reload ecosystem.config.js --env production',
+      'pre-setup': ''
+    }
+  }
+};
+```
+
+Arranco :
+
+```sh
+npx pm2 start ecosystem.config.js
+```
+
+> [!NOTE]
+>
+> PM2 tiene https://pm2.io/ que para una aplicación es gratuita. Te mide las métricas de rendimiento de tu app está genial y recomendada al 100% te monitores los errores, el tiempo hasta que se recupera, etc
+> EN PRODUCCION SE UTILIZA MUCHO PM2 para verlo todo más fácil, PM" es la antesala de Docker. Si no quieres meterte en Doker pero tener una buena herramienta de control de procesos PM2 es lo ideal.
+
+
+
+## ejemplo práctica
+
+Vamos hacer el upload de las imagenes del 
+
