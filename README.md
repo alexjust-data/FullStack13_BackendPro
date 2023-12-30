@@ -4209,5 +4209,149 @@ npx pm2 start ecosystem.config.js
 
 ## ejemplo práctica
 
-Vamos hacer el upload de las imagenes del 
+Vamos hacer el upload de las imagenes de la aplicacion inicial. Recuerda que
+
+> [!NOTE]
+> Partimos de que ya se hizo una pequeña aplicacion (https://github.com/alexjust-data/App-Nodepop-backend) y que ya teníamos en https://github.com/alexjust-data/FullStack_Node_mongoDB la teoría y pática de la primera parte, ahora hemos iniciado el primer commit
+
+Ahora en `models/Agente.js` Haremos que cuando se crea un Agente le podamos poner el avatar `avatar: String,`.
+
+```js
+// definir el esquema de los agentes
+const agenteSchema = mongoose.Schema({
+  name: { type: String, index: true },
+  age: { type: Number, index: true, min: 18, max: 120 },
+  owner: { ref: 'Usuario', type: mongoose.Schema.Types.ObjectId },
+  avatar: String, // en la práctica sería la imagen del anuncio
+}, {
+  // collection: 'agentes' // para forzar un nombre concreto de colección
+});
+```
+
+Quiero que cuando me hagan la petición a la API `ROUTES/api/agentes.js` quiero que me puedan subor un fichero y yo guarde en la base de datos la referencia de ese fichero y ese fichero tenga que ir a una carpeta de uploads que es la imagen del avatar de ese usuario.
+
+```js
+// POST /api/agentes
+// Crea un agente
+```
+
+Para recibir un `loads` lo primero que tenemos que vigilar es en `app.js` que podamos recibirlos. Ahora mismo estamos usando
+
+```js
+// middlewares
+// app.use(logger('dev'));
+// app.use(express.json());
+app.use(express.urlencoded({ extended: false })); // parea el body en formato urlencoded
+// app.use(cookieParser());
+// app.use(express.static(path.join(__dirname, 'public')));
+```
+
+y no lo cambiaremos, pero los uploads utilizan otra codificacion, `multipart/form-data`
+
+
+> [!IMPORTANTE]
+> PARA escojer una librería u otra :
+> 1: miro cuantas estrellas tiene en github
+> 2: miro en `npm  multer` cuantas descargas semanales tiene, porque puede que las estrellas sean por antaño.
+> 3: miro las fechas de los commits para ver si tiene mantenimiento o actividad.
+> El numero de `isues` de git para ver si el autor corrije los bugs
+
+
+
+```sh
+# 
+npm repo multer
+
+# instalar
+npm install multer
+```
+
+Me hago un modulo de configuracion para los uploats por si quiero configurar en varios sitios tenerlo accesible. `lib/uploadConfigure.js`
+
+```js
+const multer = require('multer');
+
+// declaro una configuración de upload
+const upload = multer({ dest: 'uploads/' });
+
+module.exports = upload;
+```
+
+Ahora vamos a nuestro `routes/api/agentes.js` añado ` upload.single('avatar') `
+
+teníamos
+
+```js
+// POST /api/agentes
+// Crea un agente
+router.post('/', async (req, res, next) => {
+  try {
+    const agenteData = req.body;
+
+    // creamos una instancia de agente en memoria
+    const agente = new Agente(agenteData);
+
+    // la persistimos en la BD
+    const agenteGuardado = await agente.save();
+
+    res.json({ result: agenteGuardado });
+
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
+ahora 
+
+
+```js
+// const express = require('express');
+// const router = express.Router();
+// const Agente = require('../../models/Agente');
+const upload = require('../../lib/uploadConfigure');
+
+...
+// POST /api/agentes
+// Crea un agente
+router.post('/', upload.single('avatar') , async (req, res, next) => {
+  // try {
+  //   const agenteData = req.body;
+    console.log(req.file);
+
+  //   // creamos una instancia de agente en memoria
+  //   const agente = new Agente(agenteData);
+
+  //   // la persistimos en la BD
+  //   const agenteGuardado = await agente.save();
+
+  //   res.json({ result: agenteGuardado });
+
+  // } catch (err) {
+  //   next(err);
+  // }
+});
+
+```
+
+La carpeta `nodeapp/upload` la tienes que crear tu a mano. Pero en este caso ya la teníamos creada
+
+```sh
+npm run dev
+```
+
+Si ahora desde `Postman` haces un POST CREARÁ una agente con el avatar y en consola verás los datos.
+Además en upload verás en numero de la foto.
+
+
+2:24
+
+
+
+
+
+
+
+
+
 
