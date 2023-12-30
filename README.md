@@ -3830,8 +3830,266 @@ Si tu arrancas otro Service, las peticiones de la app se repartiran entre servid
 Cote está muy bien para empezar con microservicios, pero fíjate que no ves cuántos mensajes hay en cola, no sabes que está pasando por detrás. Si estuvieras con 1000 peticiones por segundo y los responders no estuvieran dando abasto, tendrías que pensar un mecanismo para solucionar el tema y con `RabnitNQL` lo ves de una forma muy sencilla qué está pasando y donde has de mejorar.
 
 
+En este momento en `nodeapp/models/Usuario.js` tenemos un método  que envía emails directamente con `NodeMeiler -> emailTransportConfigure();`
+
+```js
+// método para enviar emails al usuario
+usuarioSchema.methods.sendEmail = async function(asunto, cuerpo) {
+  // crear un transport
+  const transport = await emailTransportConfigure();
+```
+
+hicmimos otro método donde implmementábamos eso con un microservicio comunicaondomos don RabbitMQ
+
+```js
+// método para pedir a otro servicio que envie un email (RabbitMQ)
+usuarioSchema.methods.sendEmailRabbitMQ = async function(asunto, cuerpo) {
+  ...
+}
+```
+
+y ahora vamos acrear otro método con `cote`
+
+```js
+usuarioSchema.methods.sendEmailCote = async function(asunto, cuerpo) {
+  ...
+}
+```
 
 
+```sh
+# me instalo `cote`
+npm install cote
+```
+
+arranco la app y me da error porque de la conexión con RabbitMQ no lo tengo arrancado
+
+```sh
+# arranco la app
+➜  nodeapp git:(main) npm run dev                 
+
+> nodeapp@0.0.0 dev
+> cross-env NODE_ENV=development DEBUG=nodeapp:* nodemon ./bin/www
+
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node ./bin/www`
+  nodeapp:server Listening on port 3000 +0ms
+Conectado a MongoDB en cursonode
+node:internal/process/promises:289
+            triggerUncaughtException(err, true /* fromPromise */);
+            ^
+
+AggregateError
+    at internalConnectMultiple (node:net:1114:18)
+    at afterConnectMultiple (node:net:1667:5) {
+  code: 'ECONNREFUSED',
+  [errors]: [
+    Error: connect ECONNREFUSED ::1:5672
+        at createConnectionError (node:net:1634:14)
+        at afterConnectMultiple (node:net:1664:40) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '::1',
+      port: 5672
+    },
+    Error: connect ECONNREFUSED 127.0.0.1:5672
+        at createConnectionError (node:net:1634:14)
+        at afterConnectMultiple (node:net:1664:40) {
+      errno: -61,
+      code: 'ECONNREFUSED',
+      syscall: 'connect',
+      address: '127.0.0.1',
+      port: 5672
+    }
+  ]
+}
+
+Node.js v20.6.1
+[nodemon] app crashed - waiting for file changes before starting...
+```
+
+arranco la app y me da error porque de la conexión con RabbitMQ no lo tengo arrancado.  
+Voy a `.env`  teníamos esto 
+
+```sh
+# RABBITMQ_BROKER_URL=amqps://suuberqm:5RRPrm2BvZyYHXV8gxh4KmVvzAyexTwd@whale.rmq.cloudamqp.com/suuberqm
+RABBITMQ_BROKER_URL=amqp://guest:guest@localhost:5672
+```
+
+y lo cambiamos a esto, anulamos RabbitMQ en localhost:5672 y lo añadimos en la nube cloudamqp que habíamos creado.
+
+```sh
+RABBITMQ_BROKER_URL=amqps://suuberqm:5RRPrm2BvZyYHXV8gxh4KmVvzAyexTwd@whale.rmq.cloudamqp.com/suuberqm
+# RABBITMQ_BROKER_URL=amqp://guest:guest@localhost:5672
+```
+
+y arrancamos
+
+```sh
+➜  nodeapp git:(main) npm run dev
+
+> nodeapp@0.0.0 dev
+> cross-env NODE_ENV=development DEBUG=nodeapp:* nodemon ./bin/www
+
+[nodemon] 3.0.1
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,cjs,json
+[nodemon] starting `node ./bin/www`
+  nodeapp:server Listening on port 3000 +0ms
+Conectado a MongoDB en cursonode
+```
+
+Añadimos en `nodeapp/models/Usuario.js`  :
+
+```js
+const { Requester } = require('cote');
+
+// instanciamos el Requester 
+// esto hace que queda arrancado en la aplicacion
+const requester = new Requester({ name: 'nodeapp-email' });
 
 
+...
 
+
+usuarioSchema.methods.sendEmailCote = async function(asunto, cuerpo) {
+  // creo un evento
+  const evento = {
+    type: 'enviar-email',
+    from: process.env.EMAIL_SERVICE_FROM,
+    to: this.email,
+    subject: asunto,
+    html: cuerpo
+  }
+  // lanzamos la funcion que cote llamará cuando obtenga respuesta de la comunicacion
+  return new Promise(resolve => requester.send(evento, resolve));
+}
+```
+
+Nos vamos al controlador ``controllers/LoginController.js` 
+
+```js
+      // usuario.sendEmailRabbitMQ('Bienvenido', 'Bienvenido a NodeApp');
+      const result = await usuario.sendEmailCote('Bienvenido', 'Bienvenido a NodeApp');
+      console.log(result);
+```
+
+Pues la parte de nodeapp de pedir que alguien mande ese emial ya está lista. Ahora en la carpeta de `microervicios/emailSender` le cambiamos el nombre `microervicios/emailSenderRabbitMQ.js` y creamos el otro archivo `microervicios/emailSenderCote.js`   
+
+actualizo en `package.json`
+
+```json
+  "scripts": {
+    "start": "cross-env node NODE_ENV=production ./bin/www",
+    "dev": "cross-env NODE_ENV=development DEBUG=nodeapp:* nodemon ./bin/www",
+    "init-db": "node init-db.js",
+    "email-sender-rabbitmq": "node ./micro-services/emailSenderRabbitMQ.js",
+    "email-sender-cote": "node ./micro-services/emailSenderCote.js"
+```
+y actualizamos en `README.md`
+
+```sh
+## Start
+
+#In production:
+
+#Start the application
+npm start
+
+
+#Start email sender service
+npm run email-sender-rabbitmq
+# or
+npm run email-sender-cote
+
+
+#In development:
+npm run dev
+
+```
+
+vamos a implementar el `microervicios/emailSenderCote.js`
+
+```js
+'use strict';
+
+
+const { Responder } = require('cote');
+const nodemailer = require('nodemailer');
+
+main().catch(err => console.log('Hubo un error', err));
+
+async function main() {
+  try {
+
+    const transport = await createTransport();
+    const responder = new Responder({ name: 'servicio de email' });
+    
+    // 'enviar-email' lo tienes en `Usuario.js/sendEmailCote : type: 'enviar-email',`
+    // cuando ocura un evento llamado 'enviar-email'
+    responder.on('enviar-email', async (req, done) => {
+      try {
+        // lo tienes en `Usuario.js/sendEmailCote
+        const { from, to, subject, html } = req;
+        // lo mandamos con el transport
+        const result = await transport.sendMail({ from, to, subject, html });
+        console.log(`Email enviado. URL: ${nodemailer.getTestMessageUrl(result)}`);
+        // le pasamos lo que queremos que responda
+        done(result);
+      } catch (error) {
+        console.log(error)
+        done({ message: err.message });
+      }
+    })
+
+  } catch (error) {
+    console.log('error')
+    done({ message: err.message });
+  }
+
+}
+
+// la tenías en `microervicios/emailSenderRabbitMQ.js`
+async function createTransport() {
+  // entorno desarrollo
+  const testAccount = await nodemailer.createTestAccount();
+
+  const developmetTransport = {
+    host: testAccount.smtp.host, //'smtp.ethereal.email',
+    port: testAccount.smtp.port,
+    secure: testAccount.smtp.secure,
+    auth: {
+        user: testAccount.user,
+        pass: testAccount.pass
+    }
+  }
+
+  return nodemailer.createTransport(developmetTransport);
+}
+```
+
+```sh
+npm run email-sender-cote
+```
+
+![](nodeapp/public/assets/img/27readme.png)
+
+Ya comienzan a comunicarse.
+Nodeapp ve que es un servicio email
+
+```sh
+nodeapp-email > service.online servicio de email#8f8f312e-ac79-4e45-8dd3-8ce0a94bc9dc on 8000
+```
+
+y el microservicio ve que está en la aplicacion 
+
+```sh
+servicio de email > service.online nodeapp-email#a14b1525-ec21-47c9-9369-736635a42536
+```
+
+Vamos a probarla abriendo la sesion desde login y deberías ver como 

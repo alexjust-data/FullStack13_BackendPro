@@ -30,8 +30,9 @@ class LoginController {
 
       // enviar email al usuario
       // usuario.sendEmail('Bienvenido', 'Bienvenido a NodeApp');
-      usuario.sendEmailRabbitMQ('Bienvenido', 'Bienvenido a NodeApp');
-      //console.log('Email enviado', emailResult);
+      // usuario.sendEmailRabbitMQ('Bienvenido', 'Bienvenido a NodeApp');
+      const result = await usuario.sendEmailCote('Bienvenido', 'Bienvenido a NodeApp');
+      console.log(result);
 
       res.redirect('/privado');
 
