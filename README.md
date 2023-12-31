@@ -4525,3 +4525,111 @@ Si otro uasuario crea el mismo archivo no perderás la imgane anterior porque he
 > No queremos publicar en git la carpeta de Avatares
 > .gitignore : nodeapp/public/avatares
 
+
+## astro js
+
+https://docs.astro.build/en/install/auto/
+
+Astro a diferencia con Express 
+
+> EXPRESS
+> Express es un framework web rápido, poco dogmático y minimalista para Node.js. Proporciona herramientas y características esenciales para construir aplicaciones web y APIs de manera eficiente. Express simplifica el desarrollo de aplicaciones en el lado del servidor con Node.js al manejar las tareas comunes relacionadas con las solicitudes y respuestas HTTP, y ofrece una amplia gama de middleware para extender su funcionalidad.
+
+
+> ASTRO (NO TANTO PARA APIS, para webs con contenido)
+> Astro es un moderno framework para desarrollo web diseñado para la creación de sitios web y aplicaciones impulsadas por contenido. Se caracteriza por su capacidad para generar sitios web extremadamente rápidos, combinando la eficiencia de la generación de sitios estáticos con la flexibilidad de los frameworks de JavaScript modernos. Astro permite a los desarrolladores escribir menos código de JavaScript cliente-side, resultando en páginas más ligeras y rápidas. También es versátil, pudiendo utilizarse para una amplia gama de aplicaciones web, desde sitios web estáticos hasta aplicaciones web del lado del cliente y puntos de acceso API dinámicos. Su enfoque está en la entrega de un rendimiento óptimo y una excelente experiencia de usuario.
+> * Cuando decimos para web con contenido, por ejemplo un blog, o curriculum, o tienda onine con mucho productos o iimgenes, el website de la empresa,
+> * ¿cuales no gestionan contenido? un api, un dashboard (mejor express)
+
+PrerequisitesSection titled Prerequisites https://docs.astro.build/en/install/auto/
+* Node.js - v18.14.1 or higher.
+* Text editor - We recommend VS Code with our Official Astro extension.
+* Terminal - Astro is accessed through its command-line interface (CLI).
+
+
+```sh
+➜  FullStack_FrontendPro git:(main) pwd
+/Users/alex/Desktop/KEEPKODING/08_BackendAvanzado/FullStack_FrontendPro
+
+
+➜  FullStack_FrontendPro git:(main) npm create astro@latest
+Need to install the following packages:
+create-astro@4.6.0
+Ok to proceed? (y) y
+
+ astro   Launch sequence initiated.
+
+   dir   Where should we create your new project?
+         ./adorable-aurora
+➜  FullStack_FrontendPro git:(main) cd ejemplos 
+➜  ejemplos git:(main) pwd
+/Users/alex/Desktop/KEEPKODING/08_BackendAvanzado/FullStack_FrontendPro/ejemplos
+➜  ejemplos git:(main) npm create astro@latest
+
+ astro   Launch sequence initiated.
+
+   dir   Where should we create your new project?
+         ./ejemplo-astro
+
+  tmpl   How would you like to start your new project?
+         Include sample files
+ ██████  Template copying...
+
+  deps   Install dependencies?
+         Yes
+ ██████  Installing dependencies with npm...
+
+    ts   Do you plan to write TypeScript?
+         Yes
+
+   use   How strict should TypeScript be?
+         Relaxed
+ ██████  TypeScript customizing...
+
+   git   Initialize a new git repository?
+         No
+      ◼  Sounds good!
+         You can always run git init manually.
+
+  next   Liftoff confirmed. Explore your project!
+
+ Enter your project directory using cd ./ejemplo-astro 
+ Run npm run dev to start the dev server. CTRL+C to stop.
+ Add frameworks like react or tailwind using astro add.
+
+ Stuck? Join us at https://astro.build/chat
+
+╭──🎁─╮  Houston:
+│ ◠ ◡ ◠  Good luck out there, astronaut! 🚀
+╰─────╯
+➜  ejemplos git:(main) ✗ 
+```
+
+```sh
+
+➜  ejemplos git:(main) ✗ cd ejemplo-astro 
+➜  ejemplo-astro git:(main) ✗ npm run dev     
+
+> ejemplo-astro@0.0.1 dev
+> astro dev
+
+▶ Astro collects anonymous usage data.
+  This information helps us improve Astro.
+  Run "astro telemetry disable" to opt-out.
+  https://astro.build/telemetry
+
+
+ astro  v4.0.8 ready in 201 ms
+
+┃ Local    http://localhost:4321/
+┃ Network  use --host to expose
+
+13:08:46 watching for file changes...
+```
+
+Puedes ver que ha creado los json y demás
+
+nos ha creado la app en http://localhost:4321/
+
+Si no le decimos nada esta web está funcionando con SSG (Static Site Generator https://jamstack.org/generators/ ) Lo que hace es que por defecto genera todas las páginas del website, todas las páginas del website en una carpeta y publica autimáticmaente, no son dinamicas, genera todos los html de todo el wepsite, y los pone en la carpeta publica . Esto es lo que hace que este framework en velocidad de saque un 30% más que otras como Next, Gatsby, worpress etc lo puedes ver en la portada https://astro.build/
+
