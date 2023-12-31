@@ -4206,12 +4206,12 @@ npx pm2 start ecosystem.config.js
 > EN PRODUCCION SE UTILIZA MUCHO PM2 para verlo todo más fácil, PM" es la antesala de Docker. Si no quieres meterte en Doker pero tener una buena herramienta de control de procesos PM2 es lo ideal.
 
 
-
 ## ejemplo práctica
 
 Vamos hacer el upload de las imagenes de la aplicacion inicial. Recuerda que
 
-> [!NOTE]
+> [!NOTE]  
+> 
 > Partimos de que ya se hizo una pequeña aplicacion (https://github.com/alexjust-data/App-Nodepop-backend) y que ya teníamos en https://github.com/alexjust-data/FullStack_Node_mongoDB la teoría y pática de la primera parte, ahora hemos iniciado el primer commit
 
 Ahora en `models/Agente.js` Haremos que cuando se crea un Agente le podamos poner el avatar `avatar: String,`.
@@ -4247,6 +4247,40 @@ app.use(express.urlencoded({ extended: false })); // parea el body en formato ur
 ```
 
 y no lo cambiaremos, pero los uploads utilizan otra codificacion, `multipart/form-data`
+
+---
+
+Si ahora desde `Postman` te creas un agente, si te da error es porque no tienes el token
+
+
+![](nodeapp/public/assets/img/29readme.png)
+
+
+Create un token haciedo un post de acceso a la api. Luego copia y pega la cabecera este token
+
+
+![](nodeapp/public/assets/img/30readme.png)
+
+
+Cuando hayas puesto autorizacion : token, envía el post y te creará un agente nuevo
+
+
+![](nodeapp/public/assets/img/31readme.png)
+
+
+Puedes ver desde NoSQLBooster que se ha creado el agente nuevo_1
+
+
+![](nodeapp/public/assets/img/32readme.png)
+
+
+Ahora vamos hacer un upload del avatar. Voy al body de POstman del mismo POST que hacemos y selecciono formdata y creo agente2 con su file de avatar. Ahora si envías SEND creará un agente pero lo creará sin datos porque has enviado el body en otro formato `form-data` que no espera la app por lo cual no hay nada.
+
+
+![](nodeapp/public/assets/img/33readme.png)
+
+
+Entonces, vamos aprender a gestionar el body´s con formato `form-data`. Para ello usaremos una librería que se llama `multer`
 
 
 > [!IMPORTANTE]
@@ -4340,18 +4374,154 @@ La carpeta `nodeapp/upload` la tienes que crear tu a mano. Pero en este caso ya 
 npm run dev
 ```
 
-Si ahora desde `Postman` haces un POST CREARÁ una agente con el avatar y en consola verás los datos.
-Además en upload verás en numero de la foto.
+Hasta ahora podemos ver que en `agentes.js` este log:
+
+```js
+// POST /api/agentes
+// Crea un agente
+router.post('/', upload.single('avatar') , async (req, res, next) => {
+  try {
+    const agenteData = req.body;
+
+    console.log(req.file);
+```
+
+por consola nos imprime este objeto
+
+```sh
+POST /api/agentes 200 45.098 ms - 78
+{
+  fieldname: 'avatar',
+  originalname: 'Esquema_SQL.jpeg',
+  encoding: '7bit',
+  mimetype: 'image/jpeg',
+  destination: 'uploads/',
+  filename: '6b27e20fccbfd8a1297f7a44a417bbcd',
+  path: 'uploads/6b27e20fccbfd8a1297f7a44a417bbcd',
+  size: 208753
+}
+POST /api/agentes 200 59.919 ms - 78
+```
+
+Además hemos creado una propiedad `avatar` en el modelo `agente.js` ; pued lo que haremos será que despues de crear un nuevo agente 
+
+```js
+// POST /api/agentes
+// Crea un agente
+// router.post('/', upload.single('avatar') , async (req, res, next) => {
+//   try {
+//     const agenteData = req.body;
+//     const usuarioIdLogado = req.usuarioLogadoAPI;
+
+//     console.log(req.file);
+
+    // creamos una instancia de agente en memoria
+    const agente = new Agente(agenteData);
+    agente.avatar = req.file.filename; 
+    agente.owner = usuarioIdLogado; // le dices quién lo ha creado, qué usuario
+
+//     // la persistimos en la BD
+//     const agenteGuardado = await agente.save();
+
+//     res.json({ result: agenteGuardado });
+
+//   } catch (err) {
+//     next(err);
+//   }
+// });
+```
+
+En el Midelwere que nos da este `upload.single('avatar')` la configuracion de este upload que está en `lib/uploadConfigure.js` en vez de poner directamente el destino (lo tienes en el apartado de Storage de https://github.com/expressjs/multer "The disk storage engine gives you full control on storing files to disk." )
 
 
-2:24
+```js
+const multer = require('multer');
+const path = require('node:path');
+
+// declaro una configuración de almacenamiento
+const storage = multer.diskStorage({
+
+  // objeto de opciones
+  destination: function(req, file, callback) {
+    // ¿donde quiero que deje las fotos de los avatares?
+    // me creo una carpeta "avatares" manualmente y le digo que lo guade allí
+    const ruta = path.join(__dirname, '..', 'public', 'avatares');
+    callback(null, ruta);
+  },
+
+  // objeto de opciones
+  filename: function(req, file, callback) {
+    // fieldname: 'avatar',
+    // Date.now() --> para diferenciar si te suben el mismo archivo varias veces
+    // originalname: 'Esquema_SQL.jpeg',
+    const filename = `${file.fieldname}-${Date.now()}-${file.originalname}`;
+    callback(null, filename);
+  }
+})
+
+// declaro una configuración de upload
+// antes lo teníasmos en ({ dest: 'uploads/' });
+const upload = multer({ storage });
+
+module.exports = upload;
+```
+
+Fíjate que `file` será el mismo objeto que nos aparece por la terminal 
+
+```sh
+{
+  fieldname: 'avatar',
+  originalname: 'Esquema_SQL.jpeg',
+  encoding: '7bit',
+  mimetype: 'image/jpeg',
+  destination: 'uploads/',
+  filename: '6b27e20fccbfd8a1297f7a44a417bbcd',
+  path: 'uploads/6b27e20fccbfd8a1297f7a44a417bbcd',
+  size: 208753
+}
+```
+
+me creo una carpeta "avatares" manualmente en `public/avatares`.
+Veta a Postman y crea el agente "NUevo_3". Ya no te sirve la carpeta `uploads` puedes elimnarla, ahora se crearán en `public/avatares` tendrás le fichero ``${file.fieldname}-${Date.now()}-${file.originalname}`;`
 
 
+![](nodeapp/public/assets/img/35readme.png)
 
 
+Si otro uasuario crea el mismo archivo no perderás la imgane anterior porque hemos puesto `Date.now()` enla creación del archivo. Si te vas a POstman y haces un GET solicitando los agentes te pide el token lo creas o le das el anterior, pero verás que el que hemos creado tiene avatar.
 
 
+```sh
+{
+    "results": [
+        {
+            "_id": "657c862970776a3eba495f55",
+            "name": "Smith",
+            "age": 33,
+            "owner": "657c862970776a3eba495f4f",
+            "__v": 0
+        },
+        {
+            "_id": "657c9cbd5c692b557a6a26ca",
+            "name": "AlexJust",
+            "age": 18,
+            "owner": "657c862970776a3eba495f4f",
+            "__v": 0
+        },
+        {
+            "_id": "65914c4a93f85840e418512c",
+            "name": "nuevo3",
+            "age": 24,
+            "avatar": "avatar-1704021066315-Esquema_SQL.jpeg",
+            "owner": "657c862970776a3eba495f4f",
+            "__v": 0
+        }
+    ]
+}
+```
 
 
-
+> [!NOTE]
+> No queremos publicar en git la carpeta de Avatares
+> .gitignore : nodeapp/public/avatares
 
