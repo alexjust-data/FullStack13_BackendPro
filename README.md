@@ -4633,3 +4633,86 @@ nos ha creado la app en http://localhost:4321/
 
 Si no le decimos nada esta web está funcionando con SSG (Static Site Generator https://jamstack.org/generators/ ) Lo que hace es que por defecto genera todas las páginas del website, todas las páginas del website en una carpeta y publica autimáticmaente, no son dinamicas, genera todos los html de todo el wepsite, y los pone en la carpeta publica . Esto es lo que hace que este framework en velocidad de saque un 30% más que otras como Next, Gatsby, worpress etc lo puedes ver en la portada https://astro.build/
 
+Al no ser dinámico, si queremos añadirle contenidos de la base de datos y la BBDD tendremos que regenerar todo el web site y volver a publicar. Si quisieramos añadirle BBDD tendríasmo que modificarle este SSG.
+
+Crea en `src/pages/pagina2.astro`
+
+```html
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Pagina 2">
+<p>Esta es la página 2</p>
+<a href="/">Volver a la home</a>
+</Layout>
+
+<style>
+  html {
+    background-color: white;;
+  }
+</style>
+```
+
+http://localhost:4321/pagina2 ya está funcionando
+
+Si te fijas estos guinoes de la parte de arriba, es el controladro, la parte que se ejecuta en el servidor
+
+```js
+---
+import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
+---
+```
+
+en Express como nodeapp sería similar a `routes/index` lo que pone aquí /* GET home page. */ sería similar a los que hay dentro de los guiones.
+
+```js
+/* GET home page. */
+```
+
+## tipos de renderizado : Web Rendering: SSR, CSR, SSG, e ISR
+
+
+https://fajarwz.com/blog/web-rendering-what-is-ssr-csr-ssg-and-isr/
+
+
+**SSR (Server-Side Rendering) : EXPRESS**
+
+- **Descripción:** El contenido de la página se genera en el servidor en cada solicitud.
+- **Ventajas:** SEO mejorado, carga inicial rápida.
+- **Desventajas:** Mayor carga en el servidor, tiempos de espera en cada solicitud.
+- **Uso:** `res.render('index', { title: 'My Page' });`
+
+**CSR (Client-Side Rendering) : REACT**
+
+- **Descripción:** El navegador carga un shell HTML y el contenido se genera mediante JavaScript.
+- **Ventajas:** Interactividad del usuario, menos carga del servidor.
+- **Desventajas:** SEO pobre, carga inicial lenta.
+- **Uso:** Aplicaciones SPA como React (`ReactDOM.render(<App />, document.getElementById('root'));`).
+
+**SSG (Static Site Generation) : ASTRO**
+
+- **Descripción:** Las páginas se generan en tiempo de compilación y se sirven como archivos estáticos.
+- **Ventajas:** Rápido, seguro, SEO mejorado.
+- **Desventajas:** No es ideal para contenido dinámico.
+- **Uso:** Generadores de sitios estáticos como Jekyll, Next.js (`next export`).
+
+**ISR (Incremental Static Regeneration)**
+
+- **Descripción:** Genera páginas estáticas de forma incremental a petición del usuario.
+- **Ventajas:** Combina ventajas de SSG con contenido siempre actualizado.
+- **Desventajas:** Complejidad en la implementación.
+- **Uso:** Disponible en Next.js (`revalidate` en `getStaticProps`).
+
+
+SI yo quiero cambiar todo el proyecto de ASTRO a `SSR (Server-Side Rendering) : EXPRESS` en la wep de astro tiene como hacerlo:
+
+https://docs.astro.build/en/guides/server-side-rendering/
+
+como voy a instalarlo donde haya un servidor nodo : https://docs.astro.build/en/guides/integrations-guide/node/
+
+```sh
+npx astro add node
+```
+
+Ará exactamente lo mismo pero renderiza de otra forma
