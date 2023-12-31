@@ -106,6 +106,8 @@ router.post('/', upload.single('avatar') , async (req, res, next) => {
     // la persistimos en la BD
     const agenteGuardado = await agente.save();
 
+    // llamais a un microservicio (con Cote / RabbirMQ)
+
     res.json({ result: agenteGuardado });
 
   } catch (err) {

@@ -4715,4 +4715,254 @@ como voy a instalarlo donde haya un servidor nodo : https://docs.astro.build/en/
 npx astro add node
 ```
 
+```sh
+➜  ejemplo-astro git:(main) ✗ npx astro add node
+✔ Resolving packages...
+15:52:33 
+  Astro will run the following command:
+  If you skip this step, you can always run it yourself later
+
+ ╭───────────────────────────────────╮
+ │ npm install @astrojs/node@^7.0.3  │
+ ╰───────────────────────────────────╯
+
+✔ Continue? … yes
+⠼ Installing dependencies...
+✔ Installing dependencies...
+15:52:37 
+  Astro will make the following changes to your config file:
+
+ ╭ astro.config.mjs ─────────────────────────────╮
+ │ import { defineConfig } from 'astro/config';  │
+ │ import tailwind from "@astrojs/tailwind";     │
+ │                                               │
+ │ import node from "@astrojs/node";             │
+ │                                               │
+ │ // https://astro.build/config                 │
+ │ export default defineConfig({                 │
+ │   integrations: [tailwind()],                 │
+ │   output: "server",                           │
+ │   adapter: node({                             │
+ │     mode: "standalone"                        │
+ │   })                                          │
+ │ });                                           │
+ ╰───────────────────────────────────────────────╯
+
+15:52:37   For complete deployment options, visit
+  https://docs.astro.build/en/guides/deploy/
+
+✔ Continue? … yes
+15:52:38   
+   success  Added the following integration to your project:
+  - @astrojs/node
+```
+
+
 Ará exactamente lo mismo pero renderiza de otra forma
+
+
+**Añadir integrations : frameworks de fromdEnd**
+
+https://docs.astro.build/en/guides/integrations-guide/
+
+
+vamos añadir taiwind https://docs.astro.build/en/guides/integrations-guide/tailwind/
+
+```sh
+➜  ejemplo-astro git:(main) npx astro add tailwind
+✔ Resolving packages...
+15:48:55 
+  Astro will run the following command:
+  If you skip this step, you can always run it yourself later
+
+ ╭──────────────────────────────────────────────────────────╮
+ │ npm install @astrojs/tailwind@^5.1.0 tailwindcss@^3.4.0  │
+ ╰──────────────────────────────────────────────────────────╯
+
+✔ Continue? … yes
+⠙ Installing dependencies...
+✔ Installing dependencies...
+15:49:03 
+  Astro will generate a minimal ./tailwind.config.mjs file.
+
+✔ Continue? … yes
+15:49:08 
+  Astro will make the following changes to your config file:
+
+ ╭ astro.config.mjs ─────────────────────────────╮
+ │ import { defineConfig } from 'astro/config';  │
+ │                                               │
+ │ import tailwind from "@astrojs/tailwind";     │
+ │                                               │
+ │ // https://astro.build/config                 │
+ │ export default defineConfig({                 │
+ │   integrations: [tailwind()]                  │
+ │ });                                           │
+ ╰───────────────────────────────────────────────╯
+
+✔ Continue? … yes
+15:49:12   
+   success  Added the following integration to your project:
+  - @astrojs/tailwind
+```
+
+```sh
+npm run dev
+```
+
+A cambiado un poco el fronten, puedes trabajarlo desde la página 
+
+```html
+<style>
+  html {
+    background-color: white;;
+  }
+  a {
+    color: lightblue;
+    text-decoration: underline;;
+  }
+</style>
+```
+
+
+**UI Frameworks**
+
+https://docs.astro.build/en/guides/integrations-guide/
+
+con REACT https://docs.astro.build/en/guides/integrations-guide/react/
+
+
+```sh
+➜  ejemplo-astro git:(main) ✗ npx astro add react
+✔ Resolving packages...
+15:54:39 
+  Astro will run the following command:
+  If you skip this step, you can always run it yourself later
+
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ npm install @astrojs/react@^3.0.9 @types/react@^18.2.46 @types/react-dom@^18.2.18 react@^18.2.0 react-dom@^18.2.0  │
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✔ Continue? … yes
+✔ Installing dependencies...
+15:54:45 
+  Astro will make the following changes to your config file:
+
+ ╭ astro.config.mjs ─────────────────────────────╮
+ │ import { defineConfig } from 'astro/config';  │
+ │ import tailwind from "@astrojs/tailwind";     │
+ │ import node from "@astrojs/node";             │
+ │                                               │
+ │ import react from "@astrojs/react";           │
+ │                                               │
+ │ // https://astro.build/config                 │
+ │ export default defineConfig({                 │
+ │   integrations: [tailwind(), react()],        │
+ │   output: "server",                           │
+ │   adapter: node({                             │
+ │     mode: "standalone"                        │
+ │   })                                          │
+ │ });                                           │
+ ╰───────────────────────────────────────────────╯
+
+✔ Continue? … yes
+15:54:46   
+   success  Added the following integration to your project:
+  - @astrojs/react
+15:54:46 
+  Astro will make the following changes to your tsconfig.json:
+
+ ╭ tsconfig.json ────────────────────────╮
+ │ {                                     │
+ │   "extends": "astro/tsconfigs/base",  │
+ │   "compilerOptions": {                │
+ │     "jsx": "react-jsx",               │
+ │     "jsxImportSource": "react"        │
+ │   }                                   │
+ │ }                                     │
+ ╰───────────────────────────────────────╯
+
+✔ Continue? … yes
+15:54:48   
+   success  Successfully updated TypeScript settings
+```
+
+Astro tiene componente, pero son de servidor (no confundir con los compnenete tipo react que son de cliente),  
+fíjate en el archivo `src/componentes/Card.astro` pues en esta carpeta me creo un nuevo fichero `src/componentes/Counter.tsx`
+
+
+NOs cremos un contador
+
+```tsx
+import { useState } from 'react'
+
+export default function App() {
+  const [counter, setCounter] = useState(0);
+
+  //increase counter
+  const increase = () => {
+    setCounter(count => count + 1);
+  };
+
+  //decrease counter
+  const decrease = () => {
+    setCounter(count => count - 1);
+  };
+
+  //reset counter
+  const reset = () =>{
+    setCounter(0)
+  }
+
+  return (
+    <div className="counter">
+      <h1>React Counter</h1>
+      <span className="counter__output">{counter}</span>
+      <div className="btn__container">
+        <button className="control__btn" onClick={increase}>+</button>
+        <button className="control__btn" onClick={decrease}>-</button>
+        <button className="reset" onClick={reset}>Reset</button>
+      </div>
+    </div>
+  );
+}
+```
+
+En archivo `src/pages/pagina2.astro` añadimos `import Counter from '../components/Counter';`
+
+```html
+---
+import Layout from '../layouts/Layout.astro';
+import Counter from '../components/Counter';
+---
+<Layout title="Pagina 2">
+<p>Esta es la página 2</p>
+
+<Counter client:visible></Counter>
+```
+
+**Podemos crear un api**
+
+
+https://docs.astro.build/en/core-concepts/endpoints/#_top
+
+En `src/pages/api/agentes/index.ts`
+
+copia y pega en contenido de dco de astro 
+
+```ts
+import type { APIRoute } from 'astro';
+
+export const GET: APIRoute = ({ params, request }) => {
+    return new Response(JSON.stringify({
+        message: "This was a GET!"
+      })
+    )
+  }
+```
+
+sólo xon esto ya tienes un api:  `http://localhost:4321/api/agentes` : `{"message":"This was a GET!"}`
+
+
+
+
